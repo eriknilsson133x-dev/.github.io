@@ -1,0 +1,1250 @@
+// js/app.js
+import { Router } from './router.js';
+import { Storage } from './storage.js';
+import { generateId, validateWorkout, getWorkoutSummary, setupFormListeners, WORKOUT_TYPES } from './workouts.js';
+import { Timer } from './timer.js';
+import { Calendar } from './calendar.js';
+import { Logger } from './logger.js';
+import { showToast, showConfetti, playSound, renderSpeakerButton } from './utils.js';
+import { initThemeFromStorage, toggleTheme as toggleThemeHelper, loadSvgSprite } from './ui.js';
+import { renderRepsUI } from './repsSetUI.js';
+
+class App {
+  constructor() {
+    this.storage = new Storage();
+    this.router = new Router();
+    this.timer = null;
+    this.calendar = new Calendar(this.storage);
+    this.logger = new Logger(this.storage);
+
+    this.state = {
+      tab: 'plan',
+      activeWorkout: null,
+      timerState: null,
+      editingWorkout: null,
+      showWorkoutForm: false
+    };
+
+    this.initRouter();
+    initThemeFromStorage();
+    loadSvgSprite('icons/sprite.svg');
+    this.registerServiceWorker();
+
+    // react to storage updates (cloud fetches) and refresh UI automatically
+    window.addEventListener('storage:workoutsUpdated', () => {
+      try { if (typeof this.render === 'function') this.render(); } catch (e) {}
+      try { if (typeof this.renderPlanEditor === 'function') this.renderPlanEditor(); } catch (e) {}
+    });
+    window.addEventListener('storage:planUpdated', () => {
+      try { if (typeof this.render === 'function') this.render(); } catch (e) {}
+      try { if (typeof this.renderPlanEditor === 'function') this.renderPlanEditor(); } catch (e) {}
+    });
+    window.addEventListener('storage:logsUpdated', () => {
+      try { if (typeof this.render === 'function') this.render(); } catch (e) {}
+      try { if (typeof this.renderPlanEditor === 'function') this.renderPlanEditor(); } catch (e) {}
+    });
+    window.addEventListener('storage:allUpdated', () => {
+      try { if (typeof this.render === 'function') this.render(); } catch (e) {}
+      try { if (typeof this.renderPlanEditor === 'function') this.renderPlanEditor(); } catch (e) {}
+    });
+
+    window.app = this;
+    // bind session renderer to instance to ensure method exists on the object
+    if (typeof this.renderWorkoutSession === 'function') {
+      this.renderWorkoutSession = this.renderWorkoutSession.bind(this);
+    } else {
+      // fallback minimal session renderer in case method isn't present (robustness)
+      this.renderWorkoutSession = () => {
+        const ts = this.state.timerState;
+        if (!ts) return '<div class="p-4">No active workout</div>';
+        const w = ts.workout || { name: 'Workout' };
+        return `
+          <div class="p-4">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-2xl font-bold">${w.name}</h2>
+              <button onclick="app.cancelWorkout()" class="px-3 py-1 rounded bg-gray-700">Cancel</button>
+            </div>
+            <div class="text-center py-12">
+              <div class="text-4xl mb-6">Session</div>
+            </div>
+          </div>
+        `;
+      };
+    }
+
+  }
+
+  showGlobalSettings() {
+    const wrap = document.createElement('div');
+    wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
+    const overlay = document.createElement('div');
+    overlay.className = 'absolute inset-0 bg-black bg-opacity-50';
+    overlay.onclick = () => wrap.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'relative bg-white dark:bg-gray-800 p-6 rounded-lg max-w-lg w-full';
+
+    modal.innerHTML = `
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold">App Settings</h2>
+        <button id="closeSettingsBtn" class="text-xl">✕</button>
+      </div>
+      <div class="mb-3 flex items-center gap-3">
+        <label for="autoSyncCheckbox" class="text-sm">Auto-sync after workout</label>
+        <input type="checkbox" id="autoSyncCheckbox" />
+      </div>
+      <div class="space-y-4">
+        <div class="flex justify-end">
+          <button id="loadSamplePlanBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Load default plan</button>
+        </div>
+        <div class="flex justify-end">
+          <button id="loadSampleWorkoutsBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Load sample workouts</button>
+        </div>
+        <div class="border-t border-gray-600 pt-4 space-y-2">
+          <div class="flex justify-end">
+            <button id="exportPlanBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Export plan</button>
+          </div>
+          <div class="flex justify-end">
+            <button id="importPlanBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Import plan</button>
+          </div>
+          <div class="flex justify-end">
+            <button id="syncAllBtn" class="px-4 py-2 bg-indigo-600 text-white rounded">Sync All → cloud</button>
+          </div>
+          <div class="flex justify-end">
+            <button id="fetchAllBtn" class="px-4 py-2 bg-indigo-600 text-white rounded">Fetch All ← cloud</button>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 mt-6">
+        <button id="closeOnlySettingsBtn" class="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500">Close</button>
+      </div>
+    `;
+
+    modal.querySelector('#closeSettingsBtn').onclick = () => wrap.remove();
+    modal.querySelector('#closeOnlySettingsBtn').onclick = () => wrap.remove();
+
+    modal.querySelector('#loadSamplePlanBtn').onclick = async () => {
+      if (!confirm('are you sure you want to enable the default plan?')) return;
+      const existing = this.storage.get('plan');
+      if (existing) this.storage.set('backup_plan', existing);
+      try {
+        const res = await fetch('data/sample-plan.json');
+        const parsed = await res.json();
+        if (parsed.plan) this.storage.set('plan', parsed.plan);
+        if (parsed.planRecurring) this.storage.set('planRecurring', parsed.planRecurring);
+        if (parsed.planCompleted) this.storage.set('planCompleted', parsed.planCompleted);
+        if (parsed.planNotes) this.storage.set('planNotes', parsed.planNotes);
+        this.storage.set('useSamplePlan', true);
+        alert('Default plan loaded');
+      } catch (err) {
+        console.error(err);
+        alert('Failed to load default plan');
+      }
+      if (window.app && typeof window.app.render === 'function') window.app.render();
+    };
+
+    // initialize auto-sync checkbox state
+    try {
+      const cb = modal.querySelector('#autoSyncCheckbox');
+      const enabled = !!this.storage.get('autoSyncAfterWorkout');
+      if (cb) cb.checked = enabled;
+      if (cb) cb.addEventListener('change', (e) => {
+        try {
+          this.storage.set('autoSyncAfterWorkout', !!e.target.checked);
+          showToast('Auto-sync ' + (e.target.checked ? 'enabled' : 'disabled'));
+        } catch (err) { console.error('Failed to save autoSyncAfterWorkout', err); }
+      });
+    } catch (e) { /* ignore */ }
+
+    modal.querySelector('#loadSampleWorkoutsBtn').onclick = async () => {
+      if (!confirm('are you sure you want to load sample workouts?')) return;
+      const existing = this.storage.get('userWorkouts');
+      if (existing) this.storage.set('backup_userWorkouts', existing);
+      try {
+        const res = await fetch('data/sample-workouts.json');
+        const parsed = await res.json();
+        if (parsed.userWorkouts) this.storage.set('userWorkouts', parsed.userWorkouts);
+        if (parsed.plan) this.storage.set('plan', parsed.plan);
+        if (parsed.prs) this.storage.set('prs', parsed.prs);
+        this.storage.set('useSampleWorkouts', true);
+        alert('Sample workouts loaded');
+      } catch (err) {
+        console.error(err);
+        alert('Failed to load sample workouts');
+      }
+      if (window.app && typeof window.app.render === 'function') window.app.render();
+    };
+
+    modal.querySelector('#exportPlanBtn').onclick = () => {
+      if (window.app && window.app.calendar && typeof window.app.calendar.exportPlan === 'function') {
+        window.app.calendar.exportPlan();
+      }
+    };
+
+    modal.querySelector('#importPlanBtn').onclick = () => {
+      if (window.app && window.app.calendar && typeof window.app.calendar.importPlan === 'function') {
+        window.app.calendar.importPlan();
+      }
+    };
+
+    // unified sync/fetch handlers
+
+    modal.querySelector('#syncAllBtn').onclick = async () => {
+      if (!confirm('Sync all (workouts, plan, logs) to cloud now?')) return;
+      try {
+        const results = await this.storage.syncAllToCloud();
+        const ok = results.workouts && results.plan && results.logs;
+        if (ok) alert('All data synced to cloud');
+        else alert('Partial/failed sync — check console for details');
+      } catch (e) { console.error(e); alert('Sync all failed'); }
+    };
+
+    modal.querySelector('#fetchAllBtn').onclick = async () => {
+      if (!confirm('Fetch all (workouts, plan, logs) from cloud and overwrite local data?')) return;
+      try {
+        const results = await this.storage.fetchAllFromCloud();
+        alert('Fetch complete — check console for details');
+        if (window.app && typeof window.app.render === 'function') window.app.render();
+      } catch (e) { console.error(e); alert('Fetch all failed'); }
+    };
+
+    wrap.appendChild(overlay);
+    wrap.appendChild(modal);
+    document.body.appendChild(wrap);
+  }
+
+  initRouter() {
+    this.router.on('/', () => this.render());
+    this.router.on('/remote', () => this.renderRemote());
+    this.router.on('/plan-editor', () => this.renderPlanEditor());
+    this.router.init();
+  }
+
+  renderPlanEditor() {
+    const app = document.getElementById('app');
+    let content = this.renderNavBar();
+    content += this.calendar.renderEditor();
+    app.innerHTML = content;
+
+    const speakerWrap = app.querySelector('#speakerWrap');
+    if (speakerWrap) {
+      const btn = renderSpeakerButton();
+      speakerWrap.replaceWith(btn);
+    }
+
+    this.updateThemeIcon();
+  }
+
+  // Proxy methods for calendar to fix onclick issues
+  toggleRecurringForCalendar(date, id) {
+    const dow = new Date(date).getDay();
+    this.calendar.recurring[dow] = this.calendar.recurring[dow] || [];
+    const idx = this.calendar.recurring[dow].indexOf(id);
+    if (idx === -1) this.calendar.recurring[dow].push(id);
+    else this.calendar.recurring[dow].splice(idx, 1);
+    this.storage.set('planRecurring', this.calendar.recurring);
+    if (typeof this.renderPlanEditor === 'function') this.renderPlanEditor();
+    else if (typeof this.render === 'function') this.render();
+  }
+
+  toggleActivityCompletedForCalendar(date, id) {
+    this.calendar.completed[date] = this.calendar.completed[date] || [];
+    const idx = this.calendar.completed[date].indexOf(id);
+    if (idx === -1) this.calendar.completed[date].push(id);
+    else this.calendar.completed[date].splice(idx, 1);
+    this.storage.set('planCompleted', this.calendar.completed);
+    if (typeof this.render === 'function') this.render();
+  }
+
+  removeFromDayForCalendar(date, id) {
+    this.calendar.plan[date] = (this.calendar.plan[date] || []).filter(i => i !== id);
+    if (this.calendar.plan[date].length === 0) delete this.calendar.plan[date];
+    this.storage.set('plan', this.calendar.plan);
+    if (typeof this.renderPlanEditor === 'function') this.renderPlanEditor();
+    else if (typeof this.render === 'function') this.render();
+  }
+
+  prevWeekForCalendar() {
+    this.calendar.prevWeek();
+  }
+
+  nextWeekForCalendar() {
+    this.calendar.nextWeek();
+  }
+
+  prevMonthForCalendar() {
+    this.calendar.prevMonth();
+  }
+
+  nextMonthForCalendar() {
+    this.calendar.nextMonth();
+  }
+
+  toggleMonthlyForCalendar() {
+    this.calendar.toggleMonthly();
+  }
+
+  closePlanModalForCalendar() {
+    this.calendar.closePlanModal();
+  }
+
+  editNoteForCalendar(date) {
+    this.calendar.editNote(date);
+  }
+
+  removeFromDayForCalendar(date, id) {
+    this.calendar.removeFromDay(date, id);
+  }
+
+  toggleActivityCompletedForCalendar(date, id) {
+    this.calendar.toggleActivityCompleted(date, id);
+  }
+
+  removeActivityForCalendar(activity) {
+    this.calendar.removeActivity(activity);
+  }
+
+  addActivityForCalendar() {
+    this.calendar.addActivity();
+  }
+
+  showActivitySettingsForCalendar() {
+    this.calendar.showActivitySettings();
+  }
+
+  saveEditorAndReturnForCalendar() {
+    this.calendar.saveEditorAndReturn();
+  }
+
+  dragStartForCalendar(event, id) {
+    this.calendar.dragStart(event, id);
+  }
+
+  dragStartActivityForCalendar(event, activity) {
+    this.calendar.dragStartActivity(event, activity);
+  }
+
+  dragEndForCalendar(event) {
+    this.calendar.dragEnd(event);
+  }
+
+  dropForCalendar(event, date) {
+    this.calendar.drop(event, date);
+  }
+
+  allowDropForCalendar(event) {
+    this.calendar.allowDrop(event);
+  }
+
+  dropInEditorForCalendar(event, date) {
+    this.calendar.dropInEditor(event, date);
+  }
+
+  toggleTheme() {
+    toggleThemeHelper();
+    this.updateThemeIcon();
+  }
+
+  updateThemeIcon() {
+    try {
+      const btn = document.querySelector('button[title="Toggle theme"]');
+      const isDark = document.documentElement.classList.contains('dark') || document.documentElement.getAttribute('data-theme') === 'dark';
+      if (!btn) return;
+      const svgs = btn.querySelectorAll('svg');
+      svgs.forEach(svg => {
+        const use = svg.querySelector('use');
+        const href = use && (use.getAttribute('href') || use.getAttribute('xlink:href')) || '';
+        if (href.includes('icon-sun')) {
+          svg.classList.toggle('hidden', isDark);
+          svg.classList.toggle('block', !isDark);
+          svg.style.display = isDark ? 'none' : 'block';
+        } else if (href.includes('icon-moon')) {
+          svg.classList.toggle('hidden', !isDark);
+          svg.classList.toggle('block', isDark);
+          svg.style.display = isDark ? 'block' : 'none';
+        }
+      });
+    } catch (e) { /* ignore */ }
+  }
+
+  registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      // avoid registering the service worker during local development to prevent stale cache issues
+      const host = location.hostname;
+      const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+      if (isLocal) {
+        // attempt to unregister any existing SWs to avoid serving stale files
+        navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister())).catch(() => {});
+        console.debug('Skipping service worker registration on localhost');
+      } else {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      }
+    }
+  }
+
+  switchTab(tab) {
+    this.state.tab = tab;
+    this.state.showWorkoutForm = false;
+    this.state.editingWorkout = null;
+    this.render();
+  }
+
+  showCreateWorkout() {
+    this.state.showWorkoutForm = true;
+    this.state.editingWorkout = null;
+    this.render();
+  }
+
+  editWorkout(id) {
+    const workout = this.storage.getUserWorkouts().find(w => w.id === id);
+    if (workout) {
+      this.state.editingWorkout = workout;
+      this.state.showWorkoutForm = true;
+      this.render();
+    }
+  }
+
+  deleteWorkout(id) {
+    if (confirm('Delete this workout?')) {
+      this.storage.deleteUserWorkout(id);
+      this.render();
+    }
+  }
+
+  cancelWorkoutForm() {
+    this.state.showWorkoutForm = false;
+    this.state.editingWorkout = null;
+    this.render();
+  }
+
+  saveWorkout(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const workout = {
+      id: this.state.editingWorkout?.id || generateId(),
+      name: formData.get('name'),
+      tool: formData.get('tool'),
+      sets: parseInt(formData.get('sets')),
+      type: formData.get('type'),
+      duration: (formData.get('type') === 'duration' || formData.get('type') === 'both')
+        ? parseInt(formData.get('duration')) : null,
+      reps: (formData.get('type') === 'reps' || formData.get('type') === 'both')
+        ? parseInt(formData.get('reps')) : null,
+      // --- repeater extras (user-editable) ---
+      repeaterWork:  formData.get('type') === 'repeaters' ? parseInt(formData.get('repeaterWork'))  || 7  : null,
+      repeaterRest:  formData.get('type') === 'repeaters' ? parseInt(formData.get('repeaterRest'))  || 3  : null,
+      repeaterCount: formData.get('type') === 'repeaters' ? parseInt(formData.get('repeaterCount')) || 10 : null,
+      // ---------------------------------------
+      hasWeight: formData.get('hasWeight') === 'on',
+      weight: formData.get('hasWeight') === 'on'
+        ? parseFloat(formData.get('weight')) : null,
+      weightUnit: formData.get('hasWeight') === 'on'
+        ? formData.get('weightUnit') : null,
+      rest: parseInt(formData.get('rest')),
+      // finger block mode
+      leftRightMode: formData.get('tool') === 'Finger block' ? formData.get('leftRightMode') === 'on' : false
+    };
+
+    const error = validateWorkout(workout);
+    if (error) { showToast(error); return; }
+
+    this.storage.saveUserWorkout(workout);
+    showToast(this.state.editingWorkout ? 'Workout updated' : 'Workout created');
+    this.state.showWorkoutForm = false;
+    this.state.editingWorkout = null;
+    this.render();
+  }
+
+  startWorkout(id, date) {
+    console.debug('App.startWorkout', id, date);
+    const workout = this.storage.getUserWorkouts().find(w => w.id === id);
+    if (!workout) { console.debug('startWorkout: workout not found', id); return; }
+    this.state.activeWorkout = id;
+    this.state.timerState = {
+      phase: 'setup',               // ask for weight first
+      totalSets: workout.sets || 1,
+      currentSet: 0,
+      inputs: [],
+      workout,
+      originalWeight: workout.weight,  // track original for saving changes
+      origin: date ? { type: 'plan', date } : null
+    };
+    this.render();
+  }
+
+  /* ----------------------------------------------------------
+     NEW: capture single weight and auto-run all sets
+  ---------------------------------------------------------- */
+  startFirstSet() {
+    const w  = this.state.timerState.workout;
+    const ts = this.state.timerState;
+
+    if (w.hasWeight) {
+      const pw = document.getElementById('presetWeight');
+      // prefer user-entered value, fall back to saved workout weight if empty
+      if (pw && String(pw.value).trim() !== '') {
+        ts.presetWeight = parseFloat(pw.value) || (w.weight || 0);
+      } else {
+        ts.presetWeight = w.weight || 0;
+      }
+      // if weight was changed, save it back to the workout template
+      if (ts.presetWeight !== (w.weight || 0)) {
+        w.weight = ts.presetWeight;
+        this.storage.saveUserWorkout(w);
+      }
+    } else {
+      ts.presetWeight = null;
+    }
+
+    // jump straight into first work period or special UI
+    if (w.type === 'repeaters') {
+      ts.repeaterCounter = 0;
+      ts.phase = 'repeaters-work';
+      ts.timeLeft = w.repeaterWork;
+      this.startTimer();
+    } else if (w.type === 'reps' && !w.duration) {
+      // Reps-only workouts: show the reps-per-set UI instead of starting a timer
+      ts.phase = 'reps-ui';
+      const total = Math.max(1, ts.totalSets || 1);
+      if (!Array.isArray(ts.inputs) || ts.inputs.length !== total) {
+        ts.inputs = new Array(total).fill(w.reps || 0);
+      }
+      if (!Array.isArray(ts.repsChecked) || ts.repsChecked.length !== total) {
+        ts.repsChecked = new Array(total).fill(false);
+      }
+      // do not call startTimer()
+    } else {
+      // Duration or both: start with countdown
+      ts.phase = 'countdown';
+      ts.timeLeft = 3;
+      this.startTimer();
+    }
+
+    // special initialization for finger block left/right mode
+    if (w.tool === 'Finger block' && w.leftRightMode) {
+      ts.phase = 'countdown';
+      ts.timeLeft = 3;
+      this.startTimer();
+    }
+
+    // initialize rep counter for reps/both-type workouts
+    if (w.type === 'reps' || w.type === 'both') {
+      ts.currentRep = 0;
+      ts.inputs = ts.inputs || [];
+    }
+    this.render();
+  }
+
+  startTimer() {
+    const ts = this.state.timerState;
+    if (ts.timer) clearInterval(ts.timer);
+
+    // BEEP whenever a work phase starts
+    if (ts.phase === 'work' || ts.phase === 'repeaters-work' || ts.phase === 'work-left' || ts.phase === 'work-right') playSound();
+
+    ts.timer = setInterval(() => {
+      ts.timeLeft -= 0.1;
+      if (ts.timeLeft <= 0) {
+        clearInterval(ts.timer);
+
+        // countdown finished: start work
+        if (ts.phase === 'countdown') {
+          ts.phase = 'work';
+          ts.timeLeft = ts.workout.duration || 1;
+          this.startTimer();
+          return;
+        }
+
+        // ---- repeater micro-loop ----
+        if (ts.workout.type === 'repeaters') {
+          if (ts.phase === 'repeaters-work') {
+            // work finished → rest
+            ts.phase = 'repeaters-rest';
+            ts.timeLeft = ts.workout.repeaterRest;
+            this.startTimer();
+            return;
+          }
+          if (ts.phase === 'repeaters-rest') {
+            ts.repeaterCounter = (ts.repeaterCounter || 0) + 1;
+            if (ts.repeaterCounter >= ts.workout.repeaterCount) {
+              // all cycles done → normal inter-set rest (unless this was the final set)
+              if (ts.currentSet + 1 >= ts.totalSets) {
+                this.finishWorkout();
+                return;
+              }
+              ts.phase = 'rest';
+              ts.timeLeft = ts.workout.rest || 120;
+              this.startTimer();
+            } else {
+              // another work/rest cycle
+              ts.phase = 'repeaters-work';
+              ts.timeLeft = ts.workout.repeaterWork;
+              this.startTimer();
+            }
+            return;
+          }
+        }
+        // ---- finger block left/right mode ----
+        if (ts.workout.tool === 'Finger block' && ts.workout.leftRightMode) {
+          if (ts.phase === 'work-left') {
+            // left work finished → delay
+            ts.phase = 'delay';
+            ts.timeLeft = 5;
+            this.startTimer();
+            return;
+          }
+          if (ts.phase === 'delay') {
+            // delay finished → work right
+            ts.phase = 'work-right';
+            ts.timeLeft = ts.workout.duration || 30;
+            this.startTimer();
+            return;
+          }
+          if (ts.phase === 'work-right') {
+            // right work finished → rest or finish
+            const effectiveRest = Math.max(0, (ts.workout.rest || 120) - 5 - (ts.workout.duration || 30));
+            if (ts.currentSet + 1 >= ts.totalSets) {
+              this.finishWorkout();
+              return;
+            }
+            ts.phase = 'rest';
+            ts.timeLeft = effectiveRest;
+            this.startTimer();
+            return;
+          }
+        }
+        // ---- normal work/rest ----
+        if (ts.phase === 'work') {
+          // record reps for this set before entering rest
+          if (ts.workout.type === 'reps' || ts.workout.type === 'both') {
+            ts.inputs = ts.inputs || [];
+            ts.inputs.push(ts.currentRep || 0);
+            ts.currentRep = 0;
+          } else if (ts.workout.type === 'duration') {
+            // record duration per set so it appears in the log
+            ts.inputs = ts.inputs || [];
+            ts.inputs.push(ts.workout.duration || 0);
+          }
+          // if this was the final set, finish immediately (no final rest)
+          if (ts.currentSet + 1 >= ts.totalSets) {
+            this.finishWorkout();
+          } else {
+            ts.phase = 'rest';
+            ts.timeLeft = ts.workout.rest || 120;
+            this.startTimer();
+          }
+        } else if (ts.phase === 'rest') {
+          ts.currentSet++;
+          if (ts.currentSet >= ts.totalSets) {
+            this.finishWorkout();
+          } else {
+            if (ts.workout.tool === 'Finger block' && ts.workout.leftRightMode) {
+              // start next set with work-left
+              ts.phase = 'work-left';
+              ts.timeLeft = ts.workout.duration || 30;
+            } else if (ts.workout.type === 'repeaters') {
+              // start next set with fresh counter
+              ts.repeaterCounter = 0;
+              ts.phase = 'repeaters-work';
+              ts.timeLeft = ts.workout.repeaterWork;
+            } else {
+              ts.phase = 'work';            // will beep on re-entry
+              ts.timeLeft = ts.workout.duration || 1;
+            }
+            this.startTimer();
+          }
+        }
+        this.render();
+      } else {
+        this.render();
+      }
+    }, 100);
+  }
+
+  adjustTimer(delta) {
+    this.state.timerState.timeLeft = Math.max(0, this.state.timerState.timeLeft + delta);
+    this.render();
+  }
+
+  // rep counter controls
+  addReps(delta) {
+    const ts = this.state.timerState;
+    if (!ts) return;
+    ts.currentRep = Math.max(0, (ts.currentRep || 0) + delta);
+    this.render();
+  }
+
+  // Handlers used by repsSetUI (inline call targets)
+  repsUI_onToggle(index) {
+    const ts = this.state.timerState;
+    if (!ts) return;
+    const total = Math.max(1, ts.totalSets || 1);
+    if (!Array.isArray(ts.repsChecked) || ts.repsChecked.length !== total) ts.repsChecked = new Array(total).fill(false);
+    if (!Array.isArray(ts.inputs) || ts.inputs.length !== total) ts.inputs = new Array(total).fill(ts.workout?.reps || 0);
+    ts.repsChecked[index] = !ts.repsChecked[index];
+    // if checked but input is empty, initialize with workout default
+    if (ts.repsChecked[index] && (ts.inputs[index] === undefined || ts.inputs[index] === null)) {
+      ts.inputs[index] = ts.workout.reps || 0;
+    }
+    // if all checked, show note input (don't finish yet)
+    // finishWorkout will be called from repsUI_finishWithNote
+    this.render();
+  }
+
+  repsUI_finishWithNote() {
+    const ts = this.state.timerState;
+    if (!ts) return;
+    const note = document.getElementById('workoutNote').value.trim();
+    ts.note = note || null;
+    this.finishWorkout();
+  }
+
+  repsUI_onChange(index, value) {
+    const ts = this.state.timerState;
+    if (!ts) return;
+    const total = Math.max(1, ts.totalSets || 1);
+    if (!Array.isArray(ts.inputs) || ts.inputs.length !== total) ts.inputs = new Array(total).fill(ts.workout?.reps || 0);
+    ts.inputs[index] = parseInt(value, 10) || 0;
+    this.render();
+  }
+
+  // New: adjust reps for specific set
+  repsUI_addReps(index, delta) {
+    const ts = this.state.timerState;
+    if (!ts) return;
+    const total = Math.max(1, ts.totalSets || 1);
+    if (!Array.isArray(ts.inputs) || ts.inputs.length !== total) ts.inputs = new Array(total).fill(ts.workout?.reps || 0);
+    ts.inputs[index] = Math.max(0, (ts.inputs[index] || 0) + delta);
+    this.render();
+  }
+
+  // Modal for post-workout notes
+  showPostWorkoutNoteModal(callback) {
+    // remove any existing
+    this.closePostWorkoutNoteModal();
+    const wrap = document.createElement('div');
+    wrap.id = 'postWorkoutNoteModal';
+    wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'absolute inset-0 bg-black bg-opacity-60';
+    overlay.onclick = () => this.closePostWorkoutNoteModal();
+
+    const modal = document.createElement('div');
+    modal.className = 'relative bg-white dark:bg-gray-800 rounded-lg p-4 w-[min(720px,95%)] max-h-[80vh] overflow-auto';
+    modal.innerHTML = `
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Add a note for this workout</h3>
+        <button id="closePostNoteBtn" class="text-xl">✕</button>
+      </div>
+      <textarea id="postWorkoutNoteTextarea" class="w-full bg-gray-100 dark:bg-gray-900 p-3 rounded text-sm mb-4" rows="4" placeholder="How did it go?"></textarea>
+      <div class="flex justify-end gap-3">
+        <button id="cancelPostNoteBtn" class="px-4 py-2 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600">Skip</button>
+        <button id="savePostNoteBtn" class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 dark:bg-blue-600 dark:hover:bg-blue-500">Add Note</button>
+      </div>
+    `;
+
+    modal.querySelector('#closePostNoteBtn').onclick = () => { this.closePostWorkoutNoteModal(); callback(''); };
+    modal.querySelector('#cancelPostNoteBtn').onclick = () => { this.closePostWorkoutNoteModal(); callback(''); };
+    modal.querySelector('#savePostNoteBtn').onclick = () => {
+      const ta = document.getElementById('postWorkoutNoteTextarea');
+      const note = (ta.value || '').trim();
+      this.closePostWorkoutNoteModal();
+      callback(note);
+    };
+
+    wrap.appendChild(overlay);
+    wrap.appendChild(modal);
+    document.body.appendChild(wrap);
+    // focus textarea
+    requestAnimationFrame(() => { const ta = document.getElementById('postWorkoutNoteTextarea'); if (ta) ta.focus(); });
+  }
+
+  closePostWorkoutNoteModal() {
+    const ex = document.getElementById('postWorkoutNoteModal');
+    if (ex && ex.parentNode) ex.parentNode.removeChild(ex);
+  }
+
+  // New: update weight during reps workout
+  repsUI_updateWeight(value) {
+    const ts = this.state.timerState;
+    if (!ts) return;
+    ts.presetWeight = parseFloat(value) || 0;
+    this.render();
+  }
+
+  skipTimer() {
+    clearInterval(this.state.timerState.timer);
+    this.state.timerState.phase = 'work';
+    this.state.timerState.timeLeft = 0;
+    this.startTimer();
+  }
+
+  cancelWorkout() {
+    if (this.state.timerState?.timer) clearInterval(this.state.timerState.timer);
+    this.state.activeWorkout = null;
+    this.state.timerState = null;
+    this.render();
+  }
+
+  finishWorkout() {
+    const workout = this.state.timerState.workout;
+    const ts = this.state.timerState;
+    // determine display value per workout type
+    let bestValue = 0;
+    let isPR = false;
+    const timeUnit = (workout.type === 'duration' ? 's' : 'reps');
+    const weightUnit = workout.weightUnit || 'kg';
+    const unit = workout.hasWeight ? weightUnit : timeUnit;
+
+    if (workout.hasWeight) {
+      // Prefer an explicitly entered preset weight; fall back to the workout's saved default.
+      const preset = (ts && typeof ts.presetWeight !== 'undefined' && ts.presetWeight !== null && Number.isFinite(ts.presetWeight))
+        ? ts.presetWeight
+        : (workout.weight || 0);
+      bestValue = preset;
+      const prs = this.storage.get('prs');
+      if (!prs[workout.id] || bestValue > prs[workout.id]) {
+        prs[workout.id] = bestValue;
+        this.storage.set('prs', prs);
+        isPR = true;
+        showConfetti();
+        showToast('NEW PR 🏆');
+      }
+    } else if (workout.type === 'duration') {
+      // use configured duration for display
+      bestValue = workout.duration || (ts.inputs && ts.inputs[0]) || 0;
+    } else {
+      // reps or other types: prefer first input if available
+      bestValue = (ts.inputs && ts.inputs.length > 0) ? ts.inputs[0] : 0;
+    }
+
+    // Build summary and per-set details. If workout has weight and also a duration/reps
+    // include both in the display (e.g. "2 sets: 5s @ 10 kg" and "Set 1: 5s @ 10 kg").
+    let summary;
+    let details = [];
+
+    const displayUnit = workout.hasWeight ? (weightUnit) : timeUnit;
+
+    if (workout.hasWeight && (workout.type === 'duration' || workout.type === 'both')) {
+      const perSet = (ts.inputs && ts.inputs.length > 0) ? ts.inputs[0] : (workout.duration || 0);
+      summary = `${ts.totalSets} sets: ${perSet} ${timeUnit} @ ${bestValue} ${weightUnit}${isPR ? ' – NEW PR' : ''}`;
+      if (ts.inputs && ts.inputs.length > 0) {
+        details = ts.inputs.map((v, i) => `Set ${i+1}: ${v} ${timeUnit} @ ${bestValue} ${weightUnit}`);
+      } else {
+        details = Array(ts.totalSets).fill(`Set: ${workout.duration || 0} ${timeUnit} @ ${bestValue} ${weightUnit}`);
+      }
+    } else if (workout.hasWeight && (workout.type === 'reps')) {
+      // reps with weight
+      const perSet = (ts.inputs && ts.inputs.length > 0) ? ts.inputs[0] : 0;
+      summary = `${ts.totalSets} sets: ${perSet} reps @ ${bestValue} ${weightUnit}${isPR ? ' – NEW PR' : ''}`;
+      if (ts.inputs && ts.inputs.length > 0) {
+        details = ts.inputs.map((v, i) => `Set ${i+1}: ${v} reps @ ${bestValue} ${weightUnit}`);
+      } else {
+        details = Array(ts.totalSets).fill(`Set: ${perSet} reps @ ${bestValue} ${weightUnit}`);
+      }
+    } else {
+      // non-weight workouts (duration or reps)
+      summary = `${ts.totalSets} sets × ${bestValue} ${unit}`;
+      if (ts.inputs && ts.inputs.length > 0) {
+        details = ts.inputs.map((v, i) => `Set ${i+1}: ${v} ${unit}`);
+      } else {
+        details = Array(ts.totalSets).fill(`Set: ${bestValue} ${unit}`);
+      }
+    }
+
+    const entry = {
+      date: new Date().toISOString(),
+      workoutId: workout.id,
+      workoutName: workout.name,
+      bestValue,
+      isPR,
+      summary: ts.note ? `${summary} — ${ts.note}` : summary,
+      details
+    };
+
+    // optional note after completion (skip for reps-only, which have their own note UI)
+    if (workout.type === 'reps' && !workout.duration) {
+      this.logger.addEntry(entry);
+      if (ts.timer) clearInterval(ts.timer);
+      this.state.activeWorkout = null;
+      this.state.timerState = null;
+      // if this workout was started from the plan, mark that scheduled occurrence completed
+      if (ts.origin && ts.origin.type === 'plan' && ts.origin.date) {
+        try {
+          this.calendar.markCompleted(ts.origin.date, workout.id);
+        } catch (e) { console.error('Failed to mark plan item completed', e); }
+      }
+      // save updated weight back to workout template if changed
+      if (workout.hasWeight && ts.presetWeight !== ts.originalWeight) {
+        workout.weight = ts.presetWeight;
+        this.storage.saveUserWorkout(workout);
+      }
+      this.state.tab = 'log';
+      this.render();
+      // Auto-sync to cloud in background after every finished workout
+      try {
+        const enabled = !!this.storage.get('autoSyncAfterWorkout');
+        if (enabled && this.storage && typeof this.storage.syncAllToCloud === 'function') {
+          this.storage.syncAllToCloud().then(results => {
+            const ok = results && results.workouts && results.plan && results.logs;
+            if (ok) showToast('Auto-sync complete');
+            else showToast('Auto-sync partial/failed');
+          }).catch(err => { console.error('auto-sync failed', err); showToast('Auto-sync failed'); });
+        }
+      } catch (e) { console.error('auto-sync scheduling failed', e); }
+    } else {
+      this.showPostWorkoutNoteModal((note) => {
+        if (note) entry.summary += ' — ' + note;
+        this.logger.addEntry(entry);
+        if (ts.timer) clearInterval(ts.timer);
+        this.state.activeWorkout = null;
+        this.state.timerState = null;
+        // if this workout was started from the plan, mark that scheduled occurrence completed
+        if (ts.origin && ts.origin.type === 'plan' && ts.origin.date) {
+          try {
+            this.calendar.markCompleted(ts.origin.date, workout.id);
+          } catch (e) { console.error('Failed to mark plan item completed', e); }
+        }
+        // save updated weight back to workout template if changed
+        if (workout.hasWeight && ts.presetWeight !== ts.originalWeight) {
+          workout.weight = ts.presetWeight;
+          this.storage.saveUserWorkout(workout);
+        }
+        this.state.tab = 'log';
+        this.render();
+        // Auto-sync to cloud in background after every finished workout
+        try {
+          const enabled = !!this.storage.get('autoSyncAfterWorkout');
+          if (enabled && this.storage && typeof this.storage.syncAllToCloud === 'function') {
+            this.storage.syncAllToCloud().then(results => {
+              const ok = results && results.workouts && results.plan && results.logs;
+              if (ok) showToast('Auto-sync complete');
+              else showToast('Auto-sync partial/failed');
+            }).catch(err => { console.error('auto-sync failed', err); showToast('Auto-sync failed'); });
+          }
+        } catch (e) { console.error('auto-sync scheduling failed', e); }
+      });
+    }
+  }
+
+  renderWorkoutSession() {
+    const ts = this.state.timerState;
+    if (!ts) return '<div class="p-4">No active workout</div>';
+    const w = ts.workout;
+
+    // Reps-only UI (no duration): delegate rendering to the repsSetUI module
+    if (w.type === 'reps' && !w.duration) {
+      try {
+        return renderRepsUI(ts, this);
+      } catch (e) {
+        console.error('Failed to render reps UI', e);
+        return '<div class="p-4">Unable to render reps UI</div>';
+      }
+    }
+
+    // setup phase: ask for preset weight if needed
+    if (ts.phase === 'setup') {
+      return `
+        <div class="p-4">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">${w.name}</h2>
+            <button onclick="app.cancelWorkout()" class="px-3 py-1 rounded bg-gray-700">Cancel</button>
+          </div>
+          <p class="text-sm text-muted mb-4">${w.tool} — ${getWorkoutSummary(w)}</p>
+          ${w.hasWeight ? `
+            <label class="block mb-2">Enter weight</label>
+            <div class="flex gap-2 items-center mb-4">
+              <input id="presetWeight" type="number" step="0.5" min="0" class="bg-gray-700 p-3 rounded w-full" placeholder="0" value="${w.weight || ''}">
+              <div class="text-sm text-gray-300 px-3">${w.weightUnit || 'kg'}</div>
+            </div>` : ''}
+          <div class="flex gap-3">
+            <button onclick="app.startFirstSet()" class="flex-1 bg-blue-600 py-3 rounded-lg text-lg hover:bg-blue-500">Start</button>
+            <button onclick="app.cancelWorkout()" class="flex-1 bg-gray-700 py-3 rounded-lg text-lg hover:bg-gray-600">Cancel</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // active timer view
+    const displayTime = Math.max(0, Math.ceil(ts.timeLeft || 0));
+    let phaseLabel = ts.phase.includes('rest') ? 'REST' : (ts.phase.includes('work') ? 'WORK' : ts.phase.toUpperCase());
+    if (w.tool === 'Finger block' && w.leftRightMode) {
+      if (ts.phase === 'work-left') phaseLabel = 'WORK LEFT';
+      else if (ts.phase === 'delay') phaseLabel = 'SWITCH';
+      else if (ts.phase === 'work-right') phaseLabel = 'WORK RIGHT';
+    }
+    if (ts.phase === 'countdown') {
+      phaseLabel = 'GET READY';
+    }
+    return `
+      <div class="p-4">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-bold">${w.name}</h2>
+          <button onclick="app.cancelWorkout()" class="px-3 py-1 rounded bg-gray-700">Cancel</button>
+        </div>
+        <div class="text-center py-12">
+          <div class="text-9xl font-bold mb-4">${displayTime}</div>
+          <div class="text-4xl mb-6">${phaseLabel}</div>
+          <div class="mb-4 text-center">
+            <div class="text-sm text-gray-400 mb-2">Set</div>
+            <div class="text-2xl">${ts.currentSet + 1} of ${ts.totalSets}</div>
+          </div>
+          ${w.hasWeight ? `<div class="mb-4">Weight: ${ts.presetWeight ?? w.weight ?? 0} ${w.weightUnit || 'kg'}</div>` : ''}
+          ${(w.type === 'repeaters') ? `
+            <div class="mb-4 text-center">
+              <div class="text-sm text-gray-400 mb-2">Cycle</div>
+              <div class="text-2xl">${Math.min((ts.repeaterCounter || 0) + 1, w.repeaterCount || 0)} of ${w.repeaterCount || 0}</div>
+            </div>` : ''}
+          ${(w.type === 'reps' || w.type === 'both') ? `
+            <div class="mb-4 text-center">
+              <div class="text-sm text-gray-400 mb-2">Reps this set</div>
+              <div class="flex items-center justify-center gap-3">
+                <button onclick="app.addReps(-1)" class="px-3 py-2 rounded bg-gray-700">-</button>
+                <div class="text-2xl">${ts.currentRep || 0}</div>
+                <button onclick="app.addReps(1)" class="px-3 py-2 rounded bg-gray-700">+</button>
+              </div>
+            </div>` : ''}
+          <div class="flex gap-2 justify-center">
+            <button onclick="app.adjustTimer(-5)" class="px-4 py-2 rounded bg-gray-700">-5s</button>
+            <button onclick="app.adjustTimer(5)" class="px-4 py-2 rounded bg-gray-700">+5s</button>
+            <button onclick="app.skipTimer()" class="px-4 py-2 rounded bg-blue-600">Skip</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  render() {
+    const app = document.getElementById('app');
+    if (this.state.activeWorkout) {
+      // robustly resolve a session renderer: instance -> prototype -> lightweight fallback
+      const sessionRenderer = (typeof this.renderWorkoutSession === 'function' && this.renderWorkoutSession)
+        || (typeof App.prototype.renderWorkoutSession === 'function' && App.prototype.renderWorkoutSession)
+        || (function () { return '<div class="p-4">Session UI unavailable</div>'; });
+      try {
+        app.innerHTML = sessionRenderer.call(this);
+      } catch (e) {
+        console.error('Error rendering workout session', e);
+        app.innerHTML = '<div class="p-4">Session UI unavailable</div>';
+      }
+    } else {
+      let content = this.renderNavBar();
+      if (this.state.tab === 'workouts') content += this.renderWorkoutsTab();
+      else if (this.state.tab === 'plan') {
+        content += this.calendar.render();
+      }
+      else if (this.state.tab === 'log') content += this.logger.render();
+      app.innerHTML = content;
+
+      // insert real speaker button element into placeholder so it has listeners
+      const speakerWrap = app.querySelector('#speakerWrap');
+      if (speakerWrap) {
+        const btn = renderSpeakerButton();
+        speakerWrap.replaceWith(btn);
+      }
+
+      // Ensure the theme toggle icon reflects the currently-applied theme
+      this.updateThemeIcon();
+
+      if (this.state.tab === 'log') {
+        import('./charts.js')
+          .then(({ renderCharts }) => renderCharts(this.storage.get('log'), this.storage))
+          .catch(err => console.error('Failed to load charts module', err));
+      }
+      if (this.state.tab === 'workouts' && this.state.showWorkoutForm) setupFormListeners();
+    }
+  }
+
+  renderRemote() {
+    const app = document.getElementById('app');
+    const ts = this.state.timerState;
+    if (this.state.activeWorkout && ts) {
+      app.innerHTML = `
+        <div class="flex items-center justify-center h-screen">
+          <div class="text-center">
+            <div class="text-9xl font-bold mb-4">${Math.ceil(ts.timeLeft)}</div>
+            <div class="text-4xl">${ts.phase.includes('rest') ? 'REST' : 'WORK'}</div>
+          </div>
+        </div>
+      `;
+    } else {
+      app.innerHTML = '<div class="p-4 text-center">No active workout</div>';
+    }
+  }
+
+  renderNavBar() {
+    const speakerPlaceholder = '<span id="speakerWrap"></span>';
+    return `
+      <nav class="flex items-center h-16 bg-gray-100 border-b border-gray-200 text-gray-900 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 px-4 transition-colors">
+        <div class="flex-1 flex justify-around">
+          ${['plan','log','workouts'].map(t => `
+            <button onclick="app.switchTab('${t}')"
+                    class="flex-1 h-full text-lg font-medium ${this.state.tab === t ? 'tab-active' : ''}"
+                    style="min-height:48px">
+              ${t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          `).join('')}
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="app.toggleTheme()" class="p-2 rounded bg-gray-800 hover:bg-gray-700" aria-label="Toggle theme" title="Toggle theme">
+            <svg class="w-5 h-5 block dark:hidden"><use href="#icon-sun"></use></svg>
+            <svg class="w-5 h-5 hidden dark:block"><use href="#icon-moon"></use></svg>
+          </button>
+          <button onclick="app.showGlobalSettings()" class="p-2 rounded bg-gray-800 hover:bg-gray-700" title="App Settings" aria-label="App Settings">⚙️</button>
+          ${speakerPlaceholder}
+        </div>
+      </nav>
+    `;
+  }
+
+  renderWorkoutsTab() {
+    if (this.state.showWorkoutForm) return this.renderWorkoutForm();
+    const workouts = this.storage.getUserWorkouts();
+    return `
+      <div class="p-4">
+        <div class="flex justify-between items-center mb-4">
+          <h1 class="text-2xl font-bold">Workout Library</h1>
+          <button onclick="app.showCreateWorkout()"
+                  class="bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-500"
+                  style="min-height:48px">+ Create Workout</button>
+        </div>
+        ${workouts.length === 0 ? `
+          <div class="text-center py-12 text-gray-400">
+            <p class="text-xl mb-2">No workouts yet</p>
+            <p>Create your first custom workout</p>
+          </div>` : `
+          <div class="space-y-3">
+            ${workouts.map(w => `
+                  <div draggable="true" ondragstart="app.calendar.dragStart(event,'${w.id}')"
+                    class="bg-white dark:bg-gray-800 p-4 rounded-lg cursor-move hover:bg-gray-50 dark:hover:bg-gray-700"
+                   style="min-height:60px">
+                <div class="flex justify-between items-start mb-2">
+                  <div class="flex-1">
+                    <h3 class="font-semibold text-lg">${w.name}</h3>
+                    <p class="text-sm text-muted">${w.tool}</p>
+                    <p class="text-sm text-muted">${getWorkoutSummary(w)}</p>
+                  </div>
+                </div>
+                <div class="flex gap-2 mt-3">
+                  <button onclick="app.startWorkout('${w.id}')"
+                          class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-500 flex-1"
+                          style="min-height:48px">Start</button>
+                    <button onclick="app.editWorkout('${w.id}')"
+                      class="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                          style="min-height:48px;min-width:48px">✏️</button>
+                  <button onclick="app.deleteWorkout('${w.id}')"
+                          class="bg-red-600 px-4 py-2 rounded hover:bg-red-500"
+                          style="min-height:48px;min-width:48px">🗑️</button>
+                </div>
+              </div>`).join('')}
+          </div>`}
+      </div>
+    `;
+  }
+
+  renderWorkoutForm() {
+    const ed = this.state.editingWorkout;
+    return `
+      <div class="p-4">
+        <h1 class="text-2xl font-bold mb-4">${ed ? 'Edit Workout' : 'Create Workout'}</h1>
+        <form id="workout-form" onsubmit="app.saveWorkout(event); return false;"
+              class="bg-gray-800 p-6 rounded-lg space-y-4">
+          <div>
+            <label class="block mb-2 font-medium">Name *</label>
+            <input type="text" name="name" value="${ed?.name || ''}"
+                   class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px" required>
+          </div>
+          <div>
+            <label class="block mb-2 font-medium">Tool *</label>
+            <select name="tool" class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px" required>
+              <option value="">Select tool</option>
+              ${['Hangboard','Pull-up bar','Barbell','Dumbbell','Cable','Body-weight','Campus','Finger block','Other']
+                .map(t => `<option value="${t}" ${ed?.tool === t ? 'selected' : ''}>${t}</option>`).join('')}
+            </select>
+          </div>
+          <div id="fingerBlockMode" style="display:${ed?.tool === 'Finger block' ? 'block' : 'none'}">
+            <label class="flex items-center p-3 bg-gray-700 rounded cursor-pointer" style="min-height:48px">
+              <input type="checkbox" name="leftRightMode" ${ed?.leftRightMode ? 'checked' : ''} class="mr-3">
+              <span>Left / Right hand mode</span>
+            </label>
+          </div>
+          <div>
+            <label class="block mb-2 font-medium">Sets *</label>
+            <input type="number" name="sets" value="${ed?.sets || 1}" min="1"
+                   class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px" required>
+          </div>
+          <div>
+            <label class="block mb-2 font-medium">Type *</label>
+            <div class="space-y-2">
+              ${WORKOUT_TYPES.map(t => `
+                <label class="flex items-center p-3 bg-gray-700 rounded cursor-pointer" style="min-height:48px">
+                  <input type="radio" name="type" value="${t.value}"
+                         ${ed?.type === t.value ? 'checked' : ''} class="mr-3">
+                  <span>${t.label}</span>
+                </label>`).join('')}
+            </div>
+          </div>
+          <div id="duration-input" style="display:${ed?.type==='duration'||ed?.type==='both'?'block':'none'}">
+            <label class="block mb-2 font-medium">Duration (seconds)</label>
+            <input type="number" name="duration" value="${ed?.duration || ''}" min="1"
+                   class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
+          </div>
+          <div id="reps-input" style="display:${ed?.type==='reps'||ed?.type==='both'?'block':'none'}">
+            <label class="block mb-2 font-medium">Reps</label>
+            <input type="number" name="reps" value="${ed?.reps || ''}" min="1"
+                   class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
+          </div>
+          <div id="repeaters-input" style="display:${ed?.type==='repeaters'?'block':'none'}">
+            <label class="block mb-2 font-medium">Number of repeater cycles</label>
+            <input type="number" name="repeaterCount" value="${ed?.repeaterCount || 10}" min="1"
+                   class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
+            <label class="block mb-2 font-medium mt-3">Work time (seconds)</label>
+            <input type="number" name="repeaterWork" value="${ed?.repeaterWork || 7}" min="1"
+                   class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
+            <label class="block mb-2 font-medium mt-3">Rest time (seconds)</label>
+            <input type="number" name="repeaterRest" value="${ed?.repeaterRest || 3}" min="1"
+                   class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
+          </div>
+          <div>
+            <label class="flex items-center p-3 bg-gray-700 rounded cursor-pointer mb-3" style="min-height:48px">
+              <input type="checkbox" name="hasWeight" ${ed?.hasWeight ? 'checked' : ''} class="mr-3">
+              <span>Track added weight</span>
+            </label>
+            <div id="weight-inputs" style="display:${ed?.hasWeight?'block':'none'}" class="space-y-3 ml-4">
+              <div>
+                <label class="block mb-2 font-medium">Weight</label>
+                <input type="number" name="weight" value="${ed?.weight || ''}" step="0.5" min="0"
+                       class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
+              </div>
+              <div>
+                <label class="block mb-2 font-medium">Weight Unit</label>
+                <select name="weightUnit" class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
+                  <option value="kg" ${ed?.weightUnit === 'kg' ? 'selected' : ''}>kg</option>
+                  <option value="lbs" ${ed?.weightUnit === 'lbs' ? 'selected' : ''}>lbs</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="block mb-2 font-medium">Rest between sets (seconds) *</label>
+            <input type="number" name="rest" value="${ed?.rest || 180}" min="0"
+                   class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px" required>
+          </div>
+          <div class="flex gap-3 pt-4">
+            <button type="submit" class="flex-1 bg-blue-600 py-3 rounded-lg text-lg hover:bg-blue-500" style="min-height:48px">
+              ${ed ? 'Update' : 'Create'} Workout
+            </button>
+            <button type="button" onclick="app.cancelWorkoutForm()"
+                    class="flex-1 bg-gray-700 py-3 rounded-lg text-lg hover:bg-gray-600" style="min-height:48px">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => new App());
+
