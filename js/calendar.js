@@ -398,6 +398,17 @@ export class Calendar {
     // refresh modal
     document.querySelector('.fixed').remove();
     this.showActivitySettings();
+    // if the plan sidebar is open, refresh it so the new activity appears immediately
+    try {
+      const sidebarWrap = document.getElementById('planSidebarWrap');
+      if (sidebarWrap) {
+        this.closePlanModal();
+        this.openPlanModal();
+      } else if (window.app && typeof window.app.renderPlanEditor === 'function') {
+        // if user is on the full editor, re-render it
+        window.app.renderPlanEditor();
+      }
+    } catch (e) { /* ignore */ }
   }
 
   removeActivity(activity) {
@@ -407,6 +418,16 @@ export class Calendar {
     // refresh modal
     document.querySelector('.fixed').remove();
     this.showActivitySettings();
+    // refresh sidebar/editor if open so removal is reflected immediately
+    try {
+      const sidebarWrap = document.getElementById('planSidebarWrap');
+      if (sidebarWrap) {
+        this.closePlanModal();
+        this.openPlanModal();
+      } else if (window.app && typeof window.app.renderPlanEditor === 'function') {
+        window.app.renderPlanEditor();
+      }
+    } catch (e) { /* ignore */ }
   }
 
   drop(ev, date) {
