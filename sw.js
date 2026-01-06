@@ -17,8 +17,19 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', e => {
+  // Cache assets but skip files that fail (e.g. missing manifest/favicon)
   e.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(ASSETS))
+    caches.open(CACHE).then(async cache => {
+      await Promise.all(ASSETS.map(async (url) => {
+        try {
+          const res = await fetch(url);
+          if (!res || !res.ok) throw new Error('fetch failed: ' + url + ' ' + (res && res.status));
+          await cache.put(url, res.clone());
+        } catch (err) {
+          console.warn('sw: failed to cache', url, err);
+        }
+      }));
+    })
   );
 });
 

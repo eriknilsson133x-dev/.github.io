@@ -159,7 +159,8 @@ export class Storage {
       }
       // notify UI that plan changed
       try { window.dispatchEvent(new CustomEvent('storage:planUpdated', { detail: { source: 'cloud' } })); } catch (e) { /* ignore */ }
-      return plan;
+      // return the currently stored plan
+      return this.get('plan');
     } catch (err) {
       console.error('fetchPlanFromCloud failed', err);
       return null;
