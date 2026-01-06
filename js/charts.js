@@ -66,7 +66,7 @@ function renderProgressChart(log, storage) {
         { title: '20 mm fingerboard', keywords: keywords.finger || [], enabled: true }
       ];
   const cutoff       = Date.now() - 90 * 24 * 60 * 60 * 1000;
-  const dataByWorkout = {};
+  const dataByCategory = {};
 
   log.forEach(entry => {
     if (new Date(entry.date).getTime() < cutoff) return;
@@ -86,33 +86,39 @@ function renderProgressChart(log, storage) {
     }
 
     if (!matchedCategory) return;
-    if (!dataByWorkout[wid]) {
-      dataByWorkout[wid] = { dateValues: {}, name: entry.workoutName };
+    const catTitle = (matchedCategory && matchedCategory.title) ? matchedCategory.title : 'Other';
+    if (!dataByCategory[catTitle]) {
+      dataByCategory[catTitle] = { dateValues: {} };
     }
 
     const dateStr = new Date(entry.date).toLocaleDateString();
     const val = entry.bestValue || 0;
-    if (!dataByWorkout[wid].dateValues[dateStr] || val > dataByWorkout[wid].dateValues[dateStr]) {
-      dataByWorkout[wid].dateValues[dateStr] = val;
+    if (!dataByCategory[catTitle].dateValues[dateStr] || val > dataByCategory[catTitle].dateValues[dateStr]) {
+      dataByCategory[catTitle].dateValues[dateStr] = val;
     }
   });
-
-  // Convert to arrays, sorted by date
-  Object.keys(dataByWorkout).forEach(wid => {
-    const dv = dataByWorkout[wid].dateValues;
+  // Convert to arrays, sorted by date (per category)
+  Object.keys(dataByCategory).forEach(title => {
+    const dv = dataByCategory[title].dateValues;
     const sortedDates = Object.keys(dv).sort((a, b) => new Date(a) - new Date(b));
-    dataByWorkout[wid].dates = sortedDates;
-    dataByWorkout[wid].values = sortedDates.map(d => dv[d]);
+    dataByCategory[title].dates = sortedDates;
+    dataByCategory[title].values = sortedDates.map(d => dv[d]);
   });
 
-  const datasets = Object.keys(dataByWorkout).map((id, i) => ({
-    label: dataByWorkout[id].name,
-    data: dataByWorkout[id].values,
-    borderColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'][i % 6],
-    fill: false
-  }));
+  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+  // Build datasets in the order of configured categories (fallback to keys order)
+  const datasets = (categories || []).map((cat, i) => {
+    const title = cat.title;
+    if (!dataByCategory[title]) return null;
+    return {
+      label: title,
+      data: dataByCategory[title].values,
+      borderColor: colors[i % colors.length],
+      fill: false
+    };
+  }).filter(Boolean);
 
-  const allDates = [...new Set(Object.values(dataByWorkout).flatMap(d => d.dates))].sort();
+  const allDates = [...new Set(Object.values(dataByCategory).flatMap(d => d.dates))].sort();
 
   new Chart(ctx, {
     type: 'line',
