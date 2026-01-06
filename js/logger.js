@@ -182,12 +182,19 @@ export class Logger {
     };
     const keywords = { finger, pull, board, climbing };
 
-    // Collect included workouts
+    // Collect included workouts (use the label text to preserve exact name)
     const includedWorkouts = [];
     const checkboxes = document.querySelectorAll('input[id^="workout-"]');
     checkboxes.forEach(cb => {
       if (cb.checked) {
-        const name = cb.id.replace('workout-', '').replace(/-/g, ' ');
+        // label structure: <label> <input ...> <span>Workout Name</span> </label>
+        let name = '';
+        try {
+          const span = cb.parentElement && cb.parentElement.querySelector('span');
+          name = span ? span.textContent.trim() : cb.id.replace('workout-', '').replace(/-/g, ' ');
+        } catch (err) {
+          name = cb.id.replace('workout-', '').replace(/-/g, ' ');
+        }
         includedWorkouts.push(name);
       }
     });
