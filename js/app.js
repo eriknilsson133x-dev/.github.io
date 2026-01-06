@@ -94,19 +94,7 @@ class App {
         <input type="checkbox" id="autoSyncCheckbox" />
       </div>
       <div class="space-y-4">
-        <div class="flex justify-end">
-          <button id="loadSamplePlanBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Load default plan</button>
-        </div>
-        <div class="flex justify-end">
-          <button id="loadSampleWorkoutsBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Load sample workouts</button>
-        </div>
         <div class="border-t border-gray-600 pt-4 space-y-2">
-          <div class="flex justify-end">
-            <button id="exportPlanBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Export plan</button>
-          </div>
-          <div class="flex justify-end">
-            <button id="importPlanBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Import plan</button>
-          </div>
           <div class="flex justify-end">
             <button id="syncAllBtn" class="px-4 py-2 bg-indigo-600 text-white rounded">Sync All → cloud</button>
           </div>
@@ -123,25 +111,7 @@ class App {
     modal.querySelector('#closeSettingsBtn').onclick = () => wrap.remove();
     modal.querySelector('#closeOnlySettingsBtn').onclick = () => wrap.remove();
 
-    modal.querySelector('#loadSamplePlanBtn').onclick = async () => {
-      if (!confirm('are you sure you want to enable the default plan?')) return;
-      const existing = this.storage.get('plan');
-      if (existing) this.storage.set('backup_plan', existing);
-      try {
-        const res = await fetch('data/sample-plan.json');
-        const parsed = await res.json();
-        if (parsed.plan) this.storage.set('plan', parsed.plan);
-        if (parsed.planRecurring) this.storage.set('planRecurring', parsed.planRecurring);
-        if (parsed.planCompleted) this.storage.set('planCompleted', parsed.planCompleted);
-        if (parsed.planNotes) this.storage.set('planNotes', parsed.planNotes);
-        this.storage.set('useSamplePlan', true);
-        alert('Default plan loaded');
-      } catch (err) {
-        console.error(err);
-        alert('Failed to load default plan');
-      }
-      if (window.app && typeof window.app.render === 'function') window.app.render();
-    };
+    
 
     // initialize auto-sync checkbox state
     try {
@@ -156,36 +126,9 @@ class App {
       });
     } catch (e) { /* ignore */ }
 
-    modal.querySelector('#loadSampleWorkoutsBtn').onclick = async () => {
-      if (!confirm('are you sure you want to load sample workouts?')) return;
-      const existing = this.storage.get('userWorkouts');
-      if (existing) this.storage.set('backup_userWorkouts', existing);
-      try {
-        const res = await fetch('data/sample-workouts.json');
-        const parsed = await res.json();
-        if (parsed.userWorkouts) this.storage.set('userWorkouts', parsed.userWorkouts);
-        if (parsed.plan) this.storage.set('plan', parsed.plan);
-        if (parsed.prs) this.storage.set('prs', parsed.prs);
-        this.storage.set('useSampleWorkouts', true);
-        alert('Sample workouts loaded');
-      } catch (err) {
-        console.error(err);
-        alert('Failed to load sample workouts');
-      }
-      if (window.app && typeof window.app.render === 'function') window.app.render();
-    };
+    
 
-    modal.querySelector('#exportPlanBtn').onclick = () => {
-      if (window.app && window.app.calendar && typeof window.app.calendar.exportPlan === 'function') {
-        window.app.calendar.exportPlan();
-      }
-    };
-
-    modal.querySelector('#importPlanBtn').onclick = () => {
-      if (window.app && window.app.calendar && typeof window.app.calendar.importPlan === 'function') {
-        window.app.calendar.importPlan();
-      }
-    };
+    // sample data load and import/export buttons removed
 
     // unified sync/fetch handlers
 
