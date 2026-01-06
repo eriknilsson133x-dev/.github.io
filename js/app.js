@@ -1122,11 +1122,6 @@ class App {
             </label>
           </div>
           <div>
-            <label class="block mb-2 font-medium">Sets *</label>
-            <input type="number" name="sets" value="${ed?.sets || 1}" min="1"
-                   class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px" required>
-          </div>
-          <div>
             <label class="block mb-2 font-medium">Type *</label>
             <div class="space-y-2">
               ${WORKOUT_TYPES.map(t => `
@@ -1136,6 +1131,11 @@ class App {
                   <span>${t.label}</span>
                 </label>`).join('')}
             </div>
+          </div>
+          <div>
+            <label class="block mb-2 font-medium">Sets *</label>
+            <input type="number" name="sets" value="${ed?.sets || 1}" min="1"
+                   class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px" required>
           </div>
           <div id="duration-input" style="display:${ed?.type==='duration'||ed?.type==='both'?'block':'none'}">
             <label class="block mb-2 font-medium">Duration (seconds)</label>
