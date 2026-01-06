@@ -95,9 +95,15 @@ class App {
       </div>
       <div class="space-y-4">
         <div class="border-t border-gray-600 pt-4 space-y-2">
-          <div class="flex justify-end gap-3">
-            <button id="syncAllBtn" class="px-4 py-2 bg-indigo-600 text-white rounded">Sync All → cloud</button>
-            <button id="fetchAllBtn" class="px-4 py-2 bg-indigo-600 text-white rounded">Fetch All ← cloud</button>
+          <div class="flex items-center justify-between">
+            <div class="flex gap-3">
+              <button id="exportBackupBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Export Backup</button>
+              <button id="importBackupBtn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded">Import Backup</button>
+            </div>
+            <div class="flex justify-end gap-3">
+              <button id="syncAllBtn" class="px-4 py-2 bg-indigo-600 text-white rounded">Sync All → cloud</button>
+              <button id="fetchAllBtn" class="px-4 py-2 bg-indigo-600 text-white rounded">Fetch All ← cloud</button>
+            </div>
           </div>
         </div>
       </div>
@@ -159,6 +165,12 @@ class App {
         if (window.app && typeof window.app.render === 'function') window.app.render();
       } catch (e) { console.error(e); alert('Fetch all failed'); }
     };
+
+    // Export / Import backup handlers (moved from Log view)
+    const expBtn = modal.querySelector('#exportBackupBtn');
+    if (expBtn) expBtn.onclick = () => { try { this.logger.exportData(); } catch (err) { console.error(err); alert('Export failed'); } };
+    const impBtn = modal.querySelector('#importBackupBtn');
+    if (impBtn) impBtn.onclick = () => { try { this.logger.importData(); } catch (err) { console.error(err); alert('Import failed'); } };
 
     wrap.appendChild(overlay);
     wrap.appendChild(modal);
