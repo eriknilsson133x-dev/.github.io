@@ -104,12 +104,17 @@ export class Logger {
     });
 
     const workoutList = Array.from(uniqueWorkouts).sort();
-    let includedWorkouts = this.storage.get('includedWorkouts');
-    if (!includedWorkouts) {
-      includedWorkouts = workoutList; // default all
+    const storedIncluded = this.storage.get('includedWorkouts');
+    const storedExcluded = this.storage.get('excludedWorkouts');
+    let includedWorkouts;
+    if (storedExcluded && Array.isArray(storedExcluded)) {
+      // derive included from storedExcluded
+      includedWorkouts = workoutList.filter(n => !storedExcluded.includes(n));
+    } else if (!storedIncluded) {
+      includedWorkouts = workoutList; // default all included
     } else {
       // add any new workouts as included
-      includedWorkouts = [...new Set([...includedWorkouts, ...workoutList])];
+      includedWorkouts = [...new Set([...storedIncluded, ...workoutList])];
     }
 
     const modal = document.createElement('div');
@@ -148,12 +153,14 @@ export class Logger {
           <div class="border-t border-gray-700 pt-3">
             <div class="text-sm font-semibold mb-2">Exclude Workouts from Progress Graph</div>
             <div class="max-h-40 overflow-y-auto space-y-1">
-              ${workoutList.map(name => `
-                <label class="flex items-center gap-2 text-sm">
-                  <input id="workout-${name.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')}" type="checkbox" ${includedWorkouts.includes(name) ? 'checked' : ''}>
-                  <span>${name}</span>
-                </label>
-              `).join('')}
+              ${workoutList.map(name => {
+                const id = name.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+                // Checkbox semantics: checked === excluded
+                const isChecked = (storedExcluded && storedExcluded.includes(name)) ? true : !includedWorkouts.includes(name) ? false : false;
+                // If storedExcluded exists, use it. Otherwise, default unchecked (included) unless includedWorkouts doesn't include it.
+                const checkedAttr = (storedExcluded && storedExcluded.includes(name)) ? 'checked' : '';
+                return `\n                <label class="flex items-center gap-2 text-sm">\n                  <input id="workout-${id}" type="checkbox" ${checkedAttr}>\n                  <span>${name}</span>\n                </label>`;
+              }).join('')}
             </div>
           </div>
         </div>
@@ -182,25 +189,24 @@ export class Logger {
     };
     const keywords = { finger, pull, board, climbing };
 
-    // Collect included workouts (use the label text to preserve exact name)
+    // Collect excluded/included workouts (checkbox checked means "excluded")
+    const excludedWorkouts = [];
     const includedWorkouts = [];
     const checkboxes = document.querySelectorAll('input[id^="workout-"]');
     checkboxes.forEach(cb => {
-      if (cb.checked) {
-        // label structure: <label> <input ...> <span>Workout Name</span> </label>
-        let name = '';
-        try {
-          const span = cb.parentElement && cb.parentElement.querySelector('span');
-          name = span ? span.textContent.trim() : cb.id.replace('workout-', '').replace(/-/g, ' ');
-        } catch (err) {
-          name = cb.id.replace('workout-', '').replace(/-/g, ' ');
-        }
-        includedWorkouts.push(name);
+      let name = '';
+      try {
+        const span = cb.parentElement && cb.parentElement.querySelector('span');
+        name = span ? span.textContent.trim() : cb.id.replace('workout-', '').replace(/-/g, ' ');
+      } catch (err) {
+        name = cb.id.replace('workout-', '').replace(/-/g, ' ');
       }
+      if (cb.checked) excludedWorkouts.push(name); else includedWorkouts.push(name);
     });
 
     this.storage.set('chartKeywords', keywords);
     this.storage.set('progressFilters', progressFilters);
+    this.storage.set('excludedWorkouts', excludedWorkouts);
     this.storage.set('includedWorkouts', includedWorkouts);
     document.querySelector('.fixed').remove();
     // re-render
