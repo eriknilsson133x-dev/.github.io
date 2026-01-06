@@ -2,7 +2,6 @@
 export const WORKOUT_TYPES = [
   { value: 'duration',  label: 'Duration only' },
   { value: 'reps',      label: 'Reps only' },
-  { value: 'both',      label: 'Duration AND reps' },
   { value: 'repeaters', label: 'Repeaters (7s on / 3s off)' }
 ];
 
