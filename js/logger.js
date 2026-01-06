@@ -216,14 +216,7 @@ export class Logger {
           <button onclick="app.logger.showSettings()" class="text-gray-400 hover:text-white text-2xl" title="Chart Settings">⚙️</button>
         </div>
 
-        <div class="mb-6 flex flex-wrap gap-3">
-          <button onclick="app.logger.exportData()" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-500" style="min-height:48px">
-            Export Backup
-          </button>
-          <button onclick="app.logger.importData()" class="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600" style="min-height:48px">
-            Import Backup
-          </button>
-        </div>
+        
 
         <div id="stats-charts" class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="bg-white dark:bg-gray-800 p-4 rounded-lg">
