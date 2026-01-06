@@ -104,13 +104,6 @@ export class Logger {
     });
 
     const workoutList = Array.from(uniqueWorkouts).sort();
-    let includedWorkouts = this.storage.get('includedWorkouts');
-    if (!includedWorkouts) {
-      includedWorkouts = workoutList; // default all
-    } else {
-      // add any new workouts as included
-      includedWorkouts = [...new Set([...includedWorkouts, ...workoutList])];
-    }
 
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
@@ -145,17 +138,6 @@ export class Logger {
               <span>20 mm fingerboard</span>
             </label>
           </div>
-          <div class="border-t border-gray-700 pt-3">
-            <div class="text-sm font-semibold mb-2">Workouts to include in Progress Graph</div>
-            <div class="max-h-40 overflow-y-auto space-y-1">
-              ${workoutList.map(name => `
-                <label class="flex items-center gap-2 text-sm">
-                  <input id="workout-${name.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')}" type="checkbox" ${includedWorkouts.includes(name) ? 'checked' : ''}>
-                  <span>${name}</span>
-                </label>
-              `).join('')}
-            </div>
-          </div>
         </div>
         <div class="flex justify-between items-center mt-6">
           <div>
@@ -182,23 +164,8 @@ export class Logger {
     };
     const keywords = { finger, pull, board, climbing };
 
-    // Collect included workouts (checkbox checked means included)
-    const includedWorkouts = [];
-    const checkboxes = document.querySelectorAll('input[id^="workout-"]');
-    checkboxes.forEach(cb => {
-      let name = '';
-      try {
-        const span = cb.parentElement && cb.parentElement.querySelector('span');
-        name = span ? span.textContent.trim() : cb.id.replace('workout-', '').replace(/-/g, ' ');
-      } catch (err) {
-        name = cb.id.replace('workout-', '').replace(/-/g, ' ');
-      }
-      if (cb.checked) includedWorkouts.push(name);
-    });
-
     this.storage.set('chartKeywords', keywords);
     this.storage.set('progressFilters', progressFilters);
-    this.storage.set('includedWorkouts', includedWorkouts);
     document.querySelector('.fixed').remove();
     // re-render
     window.app.render();

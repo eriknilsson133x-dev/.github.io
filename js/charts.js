@@ -59,8 +59,6 @@ function renderProgressChart(log, storage) {
 
   const keywords = storage.get('chartKeywords') || defaultKeywords;
   const progressFilters = storage.get('progressFilters') || { pull: true, finger: true };
-  const includedWorkouts = storage.get('includedWorkouts') || [];
-  const includedLower = includedWorkouts.map(n => (n || '').toLowerCase().trim());
   const cutoff       = Date.now() - 90 * 24 * 60 * 60 * 1000;
   const dataByWorkout = {};
 
@@ -82,9 +80,6 @@ function renderProgressChart(log, storage) {
 
     if (!matchedCategory) return;
     if (!progressFilters[matchedCategory]) return; // respect user checkbox
-    const nameLower = (name || '').toLowerCase().trim();
-    if (!includedLower.includes(nameLower)) return; // exclude unchecked workouts
-
     if (!dataByWorkout[wid]) {
       dataByWorkout[wid] = { dateValues: {}, name: entry.workoutName };
     }
