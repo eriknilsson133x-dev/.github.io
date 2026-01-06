@@ -21,6 +21,7 @@ create table if not exists backups (
 create table if not exists plans (
   id text primary key,
   data jsonb,
+  activities jsonb,
   updated bigint,
   created_at timestamptz default now()
 );

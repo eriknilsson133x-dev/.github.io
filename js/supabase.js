@@ -48,6 +48,7 @@ export async function upsertCloudPlan(plan) {
   const payload = {
     id: plan.id || 'user-plan',
     data: plan.data || plan,
+    activities: (plan.data && plan.data.activities) || plan.activities || null,
     updated: plan.updated || Date.now()
   };
   // return the upserted row(s) so callers can inspect results

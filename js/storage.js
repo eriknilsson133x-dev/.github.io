@@ -142,9 +142,9 @@ export class Storage {
       if (!rows || !rows.length) return null;
       // prefer id 'user-plan' if present
       const row = rows.find(r => r.id === 'user-plan') || rows[0];
-      const planData = row.data ? row.data : row;
+      const planData = row && row.data ? row.data : null;
       console.debug('fetchPlanFromCloud: chosen plan', row);
-      // planData may contain multiple keys (plan, planRecurring, planCompleted, planNotes)
+      // planData may contain multiple keys (plan, planRecurring, planCompleted, planNotes, activities)
       if (planData && typeof planData === 'object' && planData.plan) {
         this.set('plan', planData.plan || {});
         if (planData.planRecurring) this.set('planRecurring', planData.planRecurring);
@@ -152,8 +152,10 @@ export class Storage {
         if (planData.planNotes) this.set('planNotes', planData.planNotes);
         if (planData.activities) this.set('activities', planData.activities);
       } else {
+        // support older or alternate shape where activities may be a top-level column
+        if (row && row.activities) this.set('activities', row.activities || []);
         // older shape: the row data is the plan itself
-        this.set('plan', planData || {});
+        this.set('plan', planData || row || {});
       }
       // notify UI that plan changed
       try { window.dispatchEvent(new CustomEvent('storage:planUpdated', { detail: { source: 'cloud' } })); } catch (e) { /* ignore */ }
