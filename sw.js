@@ -1,5 +1,5 @@
 // sw.js
-const CACHE = 'crimpd-v1';
+const CACHE = 'crimpd-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -46,5 +46,14 @@ self.addEventListener('fetch', e => {
         return response;
       });
     })
+  );
+});
+
+self.addEventListener('activate', e => {
+  // Remove old caches not matching current CACHE
+  e.waitUntil(
+    caches.keys().then(keys => Promise.all(
+      keys.map(k => { if (k !== CACHE) return caches.delete(k); return Promise.resolve(); })
+    ))
   );
 });
