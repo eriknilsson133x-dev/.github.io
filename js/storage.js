@@ -6,6 +6,7 @@ export class Storage {
       log: [],
       prs: {},
       userWorkouts: [],
+      activities: ['stretching','rest','recovery'],
       autoSyncAfterWorkout: true
     };
   }
@@ -101,9 +102,10 @@ export class Storage {
       const planRecurring = this.get('planRecurring') || {};
       const planCompleted = this.get('planCompleted') || {};
       const planNotes = this.get('planNotes') || {};
+      const activities = this.get('activities') || [];
       const payload = {
         id: 'user-plan',
-        data: { plan, planRecurring, planCompleted, planNotes },
+        data: { plan, planRecurring, planCompleted, planNotes, activities },
         updated: Date.now()
       };
       const res = await mod.upsertCloudPlan(payload);
@@ -148,6 +150,7 @@ export class Storage {
         if (planData.planRecurring) this.set('planRecurring', planData.planRecurring);
         if (planData.planCompleted) this.set('planCompleted', planData.planCompleted);
         if (planData.planNotes) this.set('planNotes', planData.planNotes);
+        if (planData.activities) this.set('activities', planData.activities);
       } else {
         // older shape: the row data is the plan itself
         this.set('plan', planData || {});
