@@ -78,7 +78,7 @@ export class Logger {
 
   showSettings() {
     const keywords = this.storage.get('chartKeywords') || defaultKeywords;
-    const progressFilters = this.storage.get('progressFilters') || { pull: true, finger: true };
+    const progressFilters = this.storage.get('progressFilters') || { pull: true, finger: true }; // legacy
     const log = this.storage.get('log') || [];
     const cutoff = Date.now() - 90 * 24 * 60 * 60 * 1000;
 
@@ -105,6 +105,15 @@ export class Logger {
 
     const workoutList = Array.from(uniqueWorkouts).sort();
 
+    // Progress categories (dynamic). Fallback to legacy pull/finger if none stored.
+    let progressCategories = this.storage.get('progressCategories');
+    if (!progressCategories || !Array.isArray(progressCategories) || !progressCategories.length) {
+      progressCategories = [
+        { title: 'Pull-ups', keywords: keywords.pull || [], enabled: progressFilters.pull !== false },
+        { title: '20 mm fingerboard', keywords: keywords.finger || [], enabled: progressFilters.finger !== false }
+      ];
+    }
+
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
     modal.innerHTML = `
@@ -128,15 +137,21 @@ export class Logger {
             <input id="climbing-keywords" class="w-full p-2 bg-white dark:bg-gray-700 rounded text-gray-900 dark:text-gray-100" value="${keywords.climbing.join(', ')}">
           </div>
           <div class="border-t border-gray-700 pt-3">
-            <div class="text-sm font-semibold mb-2">Progress Graph Categories</div>
-            <label class="flex items-center gap-2 text-sm">
-              <input id="progress-pull" type="checkbox" ${progressFilters.pull ? 'checked' : ''}>
-              <span>Pull-ups</span>
-            </label>
-            <label class="flex items-center gap-2 text-sm mt-2">
-              <input id="progress-finger" type="checkbox" ${progressFilters.finger ? 'checked' : ''}>
-              <span>20 mm fingerboard</span>
-            </label>
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm font-semibold">Progress Graph Categories</div>
+              <button type="button" onclick="app.logger.addProgressCategoryRow()" class="text-sm px-2 py-1 bg-blue-600 rounded hover:bg-blue-500">+ Add</button>
+            </div>
+            <div id="progress-categories" class="space-y-3">
+              ${progressCategories.map((cat, idx) => `
+                <div class="progress-category-row bg-gray-700 rounded p-3 space-y-2">
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" class="category-enabled" ${cat.enabled === false ? '' : 'checked'}>
+                    <input type="text" class="category-title flex-1 p-2 bg-gray-600 rounded text-gray-100" placeholder="Category title" value="${cat.title || ''}">
+                  </div>
+                  <input type="text" class="category-keywords w-full p-2 bg-gray-600 rounded text-gray-100" placeholder="Comma-separated keywords" value="${(cat.keywords || []).join(', ')}">
+                </div>
+              `).join('')}
+            </div>
           </div>
         </div>
         <div class="flex justify-between items-center mt-6">
@@ -158,14 +173,22 @@ export class Logger {
     const pull = document.getElementById('pull-keywords').value.split(',').map(s => s.trim()).filter(s => s);
     const board = document.getElementById('board-keywords').value.split(',').map(s => s.trim()).filter(s => s);
     const climbing = document.getElementById('climbing-keywords').value.split(',').map(s => s.trim()).filter(s => s);
-    const progressFilters = {
-      pull: document.getElementById('progress-pull').checked,
-      finger: document.getElementById('progress-finger').checked
-    };
     const keywords = { finger, pull, board, climbing };
 
+    // Collect dynamic progress categories
+    const progressCategories = [];
+    const catRows = document.querySelectorAll('#progress-categories .progress-category-row');
+    catRows.forEach(row => {
+      const enabled = row.querySelector('.category-enabled')?.checked ?? true;
+      const title = row.querySelector('.category-title')?.value?.trim() || '';
+      const kwStr = row.querySelector('.category-keywords')?.value || '';
+      const kw = kwStr.split(',').map(s => s.trim()).filter(Boolean);
+      if (!title && kw.length === 0) return; // skip empty rows
+      progressCategories.push({ title, keywords: kw, enabled });
+    });
+
     this.storage.set('chartKeywords', keywords);
-    this.storage.set('progressFilters', progressFilters);
+    this.storage.set('progressCategories', progressCategories);
     document.querySelector('.fixed').remove();
     // re-render
     window.app.render();
@@ -262,5 +285,20 @@ export class Logger {
         </div>
       </div>
     `;
+  }
+
+  addProgressCategoryRow() {
+    const container = document.getElementById('progress-categories');
+    if (!container) return;
+    const div = document.createElement('div');
+    div.className = 'progress-category-row bg-gray-700 rounded p-3 space-y-2';
+    div.innerHTML = `
+      <div class="flex items-center gap-2">
+        <input type="checkbox" class="category-enabled" checked>
+        <input type="text" class="category-title flex-1 p-2 bg-gray-600 rounded text-gray-100" placeholder="Category title">
+      </div>
+      <input type="text" class="category-keywords w-full p-2 bg-gray-600 rounded text-gray-100" placeholder="Comma-separated keywords">
+    `;
+    container.appendChild(div);
   }
 }

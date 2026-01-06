@@ -58,7 +58,13 @@ function renderProgressChart(log, storage) {
   if (!ctx || !storage) return;
 
   const keywords = storage.get('chartKeywords') || defaultKeywords;
-  const progressFilters = storage.get('progressFilters') || { pull: true, finger: true };
+  const storedCategories = storage.get('progressCategories');
+  const categories = (storedCategories && Array.isArray(storedCategories) && storedCategories.length)
+    ? storedCategories
+    : [
+        { title: 'Pull-ups', keywords: keywords.pull || [], enabled: true },
+        { title: '20 mm fingerboard', keywords: keywords.finger || [], enabled: true }
+      ];
   const cutoff       = Date.now() - 90 * 24 * 60 * 60 * 1000;
   const dataByWorkout = {};
 
@@ -68,18 +74,18 @@ function renderProgressChart(log, storage) {
     if (!wid) return;
     const name = entry.workoutName || '';
 
-    // classify using same keyword logic as the pie chart, but only for pull/finger
+    // classify using dynamic progress categories (first match wins)
     let matchedCategory = null;
-    for (const cat of ['pull', 'finger']) {
-      const words = keywords[cat] || [];
-      if (words.some(w => name.toLowerCase().includes(w.toLowerCase()))) {
+    for (const cat of categories) {
+      if (cat.enabled === false) continue;
+      const words = cat.keywords || [];
+      if (words.some(w => name.toLowerCase().includes((w || '').toLowerCase()))) {
         matchedCategory = cat;
         break;
       }
     }
 
     if (!matchedCategory) return;
-    if (!progressFilters[matchedCategory]) return; // respect user checkbox
     if (!dataByWorkout[wid]) {
       dataByWorkout[wid] = { dateValues: {}, name: entry.workoutName };
     }
