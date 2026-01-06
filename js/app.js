@@ -1178,7 +1178,7 @@ class App {
               </div>
             </div>
           </div>
-          <div>
+          <div id="rest-input">
             <label class="block mb-2 font-medium">Rest between sets (seconds) *</label>
             <input type="number" name="rest" value="${ed?.rest || 180}" min="0"
                    class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px" required>

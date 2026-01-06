@@ -23,8 +23,7 @@ export function validateWorkout(w) {
   if ((w.type === 'duration' || w.type === 'both') && (!w.duration || w.duration <= 0)) return 'Duration > 0';
   if ((w.type === 'reps' || w.type === 'both') && (!w.reps || w.reps <= 0)) return 'Reps > 0';
   if (w.type === 'repeaters' && (!w.repeaterCount || w.repeaterCount < 1)) return 'Repeater cycles ≥ 1';
-
-  if (w.rest == null || w.rest < 0) return 'Rest ≥ 0';
+  if (w.type !== 'reps' && (w.rest == null || w.rest < 0)) return 'Rest ≥ 0';
   return null;
 }
 
@@ -56,6 +55,24 @@ export function setupFormListeners() {
         document.getElementById('duration-input').style.display = (t === 'duration' || t === 'both') ? 'block' : 'none';
         document.getElementById('reps-input').style.display    = (t === 'reps'    || t === 'both') ? 'block' : 'none';
         document.getElementById('repeaters-input').style.display = (t === 'repeaters') ? 'block' : 'none';
+        // hide rest when 'reps' only and make it not required
+        try {
+          const restWrap = document.getElementById('rest-input');
+          const restInput = form.querySelector('input[name="rest"]');
+          if (restWrap) restWrap.style.display = (t === 'reps') ? 'none' : 'block';
+          if (restInput) restInput.required = !(t === 'reps');
+        } catch (err) { /* ignore */ }
+        // auto-enable Track added weight for reps-only
+        try {
+          const hasWeight = form.querySelector('input[name="hasWeight"]');
+          const weightInputs = document.getElementById('weight-inputs');
+          if (t === 'reps') {
+            if (hasWeight && !hasWeight.checked) {
+              hasWeight.checked = true;
+              if (weightInputs) weightInputs.style.display = 'block';
+            }
+          }
+        } catch (err) { /* ignore */ }
       });
     });
 
