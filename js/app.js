@@ -90,15 +90,13 @@ class App {
         <button id="closeSettingsBtn" class="text-xl">✕</button>
       </div>
       <div class="mb-3 flex items-center gap-3">
-        <label for="autoSyncCheckbox" class="text-sm">Auto-sync after workout</label>
-        <input type="checkbox" id="autoSyncCheckbox" />
+        <label class="text-sm">Auto-sync after workout</label>
+        <button id="autoSyncBtn" class="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700">Off</button>
       </div>
       <div class="space-y-4">
         <div class="border-t border-gray-600 pt-4 space-y-2">
-          <div class="flex justify-end">
+          <div class="flex justify-end gap-3">
             <button id="syncAllBtn" class="px-4 py-2 bg-indigo-600 text-white rounded">Sync All → cloud</button>
-          </div>
-          <div class="flex justify-end">
             <button id="fetchAllBtn" class="px-4 py-2 bg-indigo-600 text-white rounded">Fetch All ← cloud</button>
           </div>
         </div>
@@ -113,17 +111,28 @@ class App {
 
     
 
-    // initialize auto-sync checkbox state
+    // initialize auto-sync toggle button state
     try {
-      const cb = modal.querySelector('#autoSyncCheckbox');
+      const btn = modal.querySelector('#autoSyncBtn');
       const enabled = !!this.storage.get('autoSyncAfterWorkout');
-      if (cb) cb.checked = enabled;
-      if (cb) cb.addEventListener('change', (e) => {
-        try {
-          this.storage.set('autoSyncAfterWorkout', !!e.target.checked);
-          showToast('Auto-sync ' + (e.target.checked ? 'enabled' : 'disabled'));
-        } catch (err) { console.error('Failed to save autoSyncAfterWorkout', err); }
-      });
+      if (btn) {
+        const setState = (v) => {
+          btn.dataset.enabled = v ? '1' : '0';
+          btn.textContent = v ? 'On' : 'Off';
+          btn.classList.toggle('bg-indigo-600', v);
+          btn.classList.toggle('text-white', v);
+          btn.classList.toggle('bg-gray-200', !v);
+        };
+        setState(enabled);
+        btn.addEventListener('click', (e) => {
+          try {
+            const newState = !(btn.dataset.enabled === '1');
+            this.storage.set('autoSyncAfterWorkout', newState);
+            setState(newState);
+            showToast('Auto-sync ' + (newState ? 'enabled' : 'disabled'));
+          } catch (err) { console.error('Failed to save autoSyncAfterWorkout', err); }
+        });
+      }
     } catch (e) { /* ignore */ }
 
     
