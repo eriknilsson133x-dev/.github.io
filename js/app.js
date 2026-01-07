@@ -127,7 +127,8 @@ class App {
               <button id="importBackupBtn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded">Import Backup</button>
             </div>
             <div class="flex justify-end gap-3">
-              <!-- Cloud sync removed; use GitHub backup in App Settings -->
+              <button id="saveAllGitHubBtn" class="px-4 py-2 bg-green-600 text-white rounded">Save All → GitHub</button>
+              <button id="loadAllGitHubBtn" class="px-4 py-2 bg-yellow-600 text-white rounded">Load All ← GitHub</button>
             </div>
           </div>
         </div>
@@ -201,6 +202,47 @@ class App {
     if (expBtn) expBtn.onclick = () => { try { this.logger.exportData(); } catch (err) { console.error(err); alert('Export failed'); } };
     const impBtn = modal.querySelector('#importBackupBtn');
     if (impBtn) impBtn.onclick = () => { try { this.logger.importData(); } catch (err) { console.error(err); alert('Import failed'); } };
+
+    // Save/Load all to GitHub (use stored repo/path/branch/token when available)
+    const saveAllBtn = modal.querySelector('#saveAllGitHubBtn');
+    const loadAllBtn = modal.querySelector('#loadAllGitHubBtn');
+    if (saveAllBtn) saveAllBtn.onclick = async () => {
+      try {
+        const storedRepo = this.storage.get('githubRepo') || '';
+        const repoVal = storedRepo || prompt('Enter repo (owner/repo)', 'owner/repo');
+        if (!repoVal) return;
+        const parts = repoVal.split('/');
+        if (parts.length < 2) return alert('Repo must be in owner/repo format');
+        const owner = parts[0];
+        const repo = parts.slice(1).join('/');
+        const path = this.storage.get('githubPath') || 'data/backup.json';
+        const branch = this.storage.get('githubBranch') || 'main';
+        const token = this.storage.get('githubToken') || undefined;
+        const message = this.storage.get('githubMessage') || 'crimpd backup from web';
+        if (!confirm(`Save all data to ${repoVal}/${path}?`)) return;
+        await this.storage.saveToGitHub({ owner, repo, path, branch, token, message });
+        alert('Saved backup to GitHub');
+      } catch (err) { console.error(err); alert('Save all failed: ' + (err && err.message)); }
+    };
+
+    if (loadAllBtn) loadAllBtn.onclick = async () => {
+      try {
+        const storedRepo = this.storage.get('githubRepo') || '';
+        const repoVal = storedRepo || prompt('Enter repo (owner/repo)', 'owner/repo');
+        if (!repoVal) return;
+        const parts = repoVal.split('/');
+        if (parts.length < 2) return alert('Repo must be in owner/repo format');
+        const owner = parts[0];
+        const repo = parts.slice(1).join('/');
+        const path = this.storage.get('githubPath') || 'data/backup.json';
+        const branch = this.storage.get('githubBranch') || 'main';
+        const token = this.storage.get('githubToken') || undefined;
+        if (!confirm('This will overwrite local data with the GitHub backup. Continue?')) return;
+        await this.storage.loadFromGitHub({ owner, repo, path, branch, token });
+        alert('Loaded backup from GitHub');
+        if (window.app && typeof window.app.render === 'function') window.app.render();
+      } catch (err) { console.error(err); alert('Load all failed: ' + (err && err.message)); }
+    };
 
     // GitHub Save / Load — friendly inline form (insert reliably)
     {
