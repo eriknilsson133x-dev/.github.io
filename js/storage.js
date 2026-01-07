@@ -49,17 +49,30 @@ export class Storage {
   export() {
     return {
       plan: this.get('plan'),
+      planRecurring: this.get('planRecurring') || {},
+      planCompleted: this.get('planCompleted') || {},
+      planNotes: this.get('planNotes') || {},
+      activities: this.get('activities') || [],
       log: this.get('log'),
       prs: this.get('prs'),
-      userWorkouts: this.get('userWorkouts')
+      userWorkouts: this.get('userWorkouts'),
+      progressCategories: this.get('progressCategories') || []
     };
   }
 
   import(data) {
+    if (!data || typeof data !== 'object') return;
     if (data.plan) this.set('plan', data.plan);
+    if (data.planRecurring) this.set('planRecurring', data.planRecurring);
+    if (data.planCompleted) this.set('planCompleted', data.planCompleted);
+    if (data.planNotes) this.set('planNotes', data.planNotes);
+    if (data.activities) this.set('activities', data.activities);
     if (data.log) this.set('log', data.log);
     if (data.prs) this.set('prs', data.prs);
     if (data.userWorkouts) this.set('userWorkouts', data.userWorkouts);
+    if (data.progressCategories) this.set('progressCategories', data.progressCategories);
+    // notify UI that everything changed
+    try { window.dispatchEvent(new CustomEvent('storage:allUpdated', { detail: { source: 'import' } })); } catch (e) { /* ignore */ }
   }
 
   // Cloud sync helpers (Supabase). Dynamically import `js/supabase.js` so the app can run without cloud keys.
@@ -233,8 +246,8 @@ export class Storage {
   // options: { owner, repo, path, branch, token, message }
   async saveToGitHub(options) {
     try {
-      const { owner, repo, path, branch = 'main', token, message = 'crimpd backup' } = options || {};
-      if (!owner || !repo || !path || !token) throw new Error('owner, repo, path and token are required');
+      const { owner, repo, path = 'data/backup.json', branch = 'main', token, message = 'crimpd backup' } = options || {};
+      if (!owner || !repo || !path) throw new Error('owner, repo and path are required');
       const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
       const payload = this.export();
       const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
@@ -252,9 +265,11 @@ export class Storage {
       const body = { message, content, branch };
       if (sha) body.sha = sha;
 
+      const headers = { Accept: 'application/vnd.github.v3+json' };
+      if (token) headers.Authorization = `token ${token}`;
       const putRes = await fetch(apiBase, {
         method: 'PUT',
-        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' },
+        headers,
         body: JSON.stringify(body)
       });
       const pj = await putRes.json();
