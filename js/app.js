@@ -114,8 +114,32 @@ class App {
       </div>
     `;
 
-    modal.querySelector('#closeSettingsBtn').onclick = () => wrap.remove();
-    modal.querySelector('#closeOnlySettingsBtn').onclick = () => wrap.remove();
+    // Save form fields (GitHub token and last-used repo info) and close
+    const saveAndClose = () => {
+      try {
+        // Persist GitHub form fields if present
+        const ghTokenEl = modal.querySelector('#gh-token');
+        if (ghTokenEl) {
+          const token = (ghTokenEl.value || '').trim();
+          const remember = !!modal.querySelector('#gh-remember')?.checked;
+          if (remember && token) this.storage.set('githubToken', token);
+          else this.storage.clear('githubToken');
+
+          const repoVal = (modal.querySelector('#gh-repo')?.value || '').trim();
+          const pathVal = (modal.querySelector('#gh-path')?.value || '').trim();
+          const branchVal = (modal.querySelector('#gh-branch')?.value || '').trim();
+          const msgVal = (modal.querySelector('#gh-message')?.value || '').trim();
+          if (repoVal) this.storage.set('githubRepo', repoVal);
+          if (pathVal) this.storage.set('githubPath', pathVal);
+          if (branchVal) this.storage.set('githubBranch', branchVal);
+          if (msgVal) this.storage.set('githubMessage', msgVal);
+        }
+      } catch (err) { console.error('saveAndClose failed', err); }
+      wrap.remove();
+    };
+
+    modal.querySelector('#closeSettingsBtn').onclick = saveAndClose;
+    modal.querySelector('#closeOnlySettingsBtn').onclick = saveAndClose;
 
     
 
