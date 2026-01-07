@@ -127,8 +127,7 @@ class App {
               <button id="importBackupBtn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded">Import Backup</button>
             </div>
             <div class="flex justify-end gap-3">
-              <button id="syncAllBtn" class="px-4 py-2 bg-indigo-600 text-white rounded">Sync All → cloud</button>
-              <button id="fetchAllBtn" class="px-4 py-2 bg-indigo-600 text-white rounded">Fetch All ← cloud</button>
+              <!-- Cloud sync removed; use GitHub backup in App Settings -->
             </div>
           </div>
         </div>
@@ -195,26 +194,7 @@ class App {
 
     // sample data load and import/export buttons removed
 
-    // unified sync/fetch handlers
-
-    modal.querySelector('#syncAllBtn').onclick = async () => {
-      if (!confirm('Sync all (workouts, plan, logs) to cloud now?')) return;
-      try {
-        const results = await this.storage.syncAllToCloud();
-        const ok = results.workouts && results.plan && results.logs;
-        if (ok) alert('All data synced to cloud');
-        else alert('Partial/failed sync — check console for details');
-      } catch (e) { console.error(e); alert('Sync all failed'); }
-    };
-
-    modal.querySelector('#fetchAllBtn').onclick = async () => {
-      if (!confirm('Fetch all (workouts, plan, logs) from cloud and overwrite local data?')) return;
-      try {
-        const results = await this.storage.fetchAllFromCloud();
-        alert('Fetch complete — check console for details');
-        if (window.app && typeof window.app.render === 'function') window.app.render();
-      } catch (e) { console.error(e); alert('Fetch all failed'); }
-    };
+    // Cloud sync buttons removed — use GitHub backup form instead
 
     // Export / Import backup handlers (moved from Log view)
     const expBtn = modal.querySelector('#exportBackupBtn');
