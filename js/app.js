@@ -172,6 +172,55 @@ class App {
     const impBtn = modal.querySelector('#importBackupBtn');
     if (impBtn) impBtn.onclick = () => { try { this.logger.importData(); } catch (err) { console.error(err); alert('Import failed'); } };
 
+    // GitHub Save / Load
+    const saveGhBtn = document.createElement('button');
+    saveGhBtn.className = 'px-4 py-2 bg-green-600 text-white rounded';
+    saveGhBtn.textContent = 'Save to GitHub';
+    saveGhBtn.onclick = async () => {
+      try {
+        const repo = prompt('Enter repo (owner/repo)', 'eriknilsson133x-dev/.github.io');
+        if (!repo) return;
+        const path = prompt('Enter file path (e.g. data/backup.json)', 'data/backup.json');
+        if (!path) return;
+        const branch = prompt('Enter branch', 'main') || 'main';
+        const token = prompt('Enter personal access token (scopes: repo) — this will be stored in memory only');
+        if (!token) return alert('Token required');
+        const message = prompt('Commit message', 'crimpd backup from web');
+        const [owner, r] = repo.split('/');
+        const res = await this.storage.saveToGitHub({ owner, repo: r, path, branch, token, message });
+        alert('Saved to GitHub: ' + (res && res.content && res.content.path ? res.content.path : 'ok'));
+      } catch (err) { console.error(err); alert('Save to GitHub failed: ' + (err && err.message)); }
+    };
+
+    const loadGhBtn = document.createElement('button');
+    loadGhBtn.className = 'px-4 py-2 bg-yellow-600 text-white rounded';
+    loadGhBtn.textContent = 'Load from GitHub';
+    loadGhBtn.onclick = async () => {
+      try {
+        const repo = prompt('Enter repo (owner/repo)', 'eriknilsson133x-dev/.github.io');
+        if (!repo) return;
+        const path = prompt('Enter file path (e.g. data/backup.json)', 'data/backup.json');
+        if (!path) return;
+        const branch = prompt('Enter branch', 'main') || 'main';
+        const token = prompt('Enter personal access token (optional)');
+        const [owner, r] = repo.split('/');
+        if (!confirm('This will overwrite local data with the GitHub file. Continue?')) return;
+        const parsed = await this.storage.loadFromGitHub({ owner, repo: r, path, branch, token });
+        alert('Loaded data from GitHub');
+        if (window.app && typeof window.app.render === 'function') window.app.render();
+      } catch (err) { console.error(err); alert('Load from GitHub failed: ' + (err && err.message)); }
+    };
+
+    // append GitHub buttons next to import/export
+    const importExportRow = modal.querySelector('.mb-6');
+    if (importExportRow) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'flex gap-2';
+      wrapper.appendChild(saveGhBtn);
+      wrapper.appendChild(loadGhBtn);
+      importExportRow.parentElement.insertBefore(wrapper, importExportRow.nextSibling);
+    }
+
     wrap.appendChild(overlay);
     wrap.appendChild(modal);
     document.body.appendChild(wrap);

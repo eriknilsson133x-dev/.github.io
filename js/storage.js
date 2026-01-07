@@ -228,4 +228,73 @@ export class Storage {
     try { window.dispatchEvent(new CustomEvent('storage:allUpdated', { detail: { source: 'cloud', results } })); } catch (e) { /* ignore */ }
     return results;
   }
+
+  // Save exported data to a file in a GitHub repository using the Contents API.
+  // options: { owner, repo, path, branch, token, message }
+  async saveToGitHub(options) {
+    try {
+      const { owner, repo, path, branch = 'main', token, message = 'crimpd backup' } = options || {};
+      if (!owner || !repo || !path || !token) throw new Error('owner, repo, path and token are required');
+      const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
+      const payload = this.export();
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+
+      // Check if file exists to get sha
+      let sha = null;
+      const getRes = await fetch(apiBase + `?ref=${encodeURIComponent(branch)}`, {
+        headers: token ? { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' } : { Accept: 'application/vnd.github.v3+json' }
+      });
+      if (getRes.ok) {
+        const j = await getRes.json();
+        if (j && j.sha) sha = j.sha;
+      }
+
+      const body = { message, content, branch };
+      if (sha) body.sha = sha;
+
+      const putRes = await fetch(apiBase, {
+        method: 'PUT',
+        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' },
+        body: JSON.stringify(body)
+      });
+      const pj = await putRes.json();
+      if (!putRes.ok) throw new Error(pj && pj.message ? pj.message : 'GitHub save failed');
+      return pj;
+    } catch (err) {
+      console.error('saveToGitHub failed', err);
+      throw err;
+    }
+  }
+
+  // Load a JSON backup file from a GitHub repository and import it into storage.
+  // options: { owner, repo, path, branch, token }
+  async loadFromGitHub(options) {
+    try {
+      const { owner, repo, path, branch = 'main', token } = options || {};
+      if (!owner || !repo || !path) throw new Error('owner, repo and path are required');
+      const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(branch)}`;
+      const res = await fetch(apiBase, {
+        headers: token ? { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' } : { Accept: 'application/vnd.github.v3+json' }
+      });
+      if (!res.ok) {
+        const pj = await res.json().catch(() => ({}));
+        throw new Error(pj && pj.message ? pj.message : 'Failed to fetch file from GitHub');
+      }
+      const j = await res.json();
+      let content = j.content || j.data || null;
+      if (!content) throw new Error('No content field in GitHub response');
+      // content may contain newlines
+      content = content.replace(/\n/g, '');
+      const decoded = decodeURIComponent(escape(atob(content)));
+      const parsed = JSON.parse(decoded);
+      // Import into storage
+      this.import(parsed);
+      // Notify UI
+      try { window.dispatchEvent(new CustomEvent('storage:allUpdated', { detail: { source: 'github' } })); } catch (e) { /* ignore */ }
+      return parsed;
+    } catch (err) {
+      console.error('loadFromGitHub failed', err);
+      throw err;
+    }
+  }
 }
