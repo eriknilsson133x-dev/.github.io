@@ -69,25 +69,6 @@ class App {
             </div>
             <div class="text-center py-12">
               <div class="text-4xl mb-6">Session</div>
-    async maybeAutoSyncToGitHub() {
-      try {
-        const enabled = !!this.storage.get('autoSyncAfterWorkout');
-        if (!enabled) return;
-        const repoVal = this.storage.get('githubRepo');
-        if (!repoVal) {
-          showToast('Auto-save: no GitHub repo configured');
-          return;
-        }
-        try {
-          showToast('Auto-saving backup to GitHub...');
-          await this.storage.saveAllToGitHub();
-          showToast('Auto-save complete');
-        } catch (err) {
-          console.error('Auto-save failed', err);
-          showToast('Auto-save failed');
-        }
-      } catch (e) { console.error('maybeAutoSyncToGitHub failed', e); }
-    }
             </div>
           </div>
         `;
@@ -135,6 +116,27 @@ class App {
         console.warn('Auto-load GitHub backup failed', err);
       }
     } catch (e) { console.error('maybeAutoLoadBackup failed', e); }
+  }
+
+  async maybeAutoSyncToGitHub() {
+    try {
+      const enabled = !!this.storage.get('autoSyncAfterWorkout');
+      if (!enabled) return;
+      const repoVal = this.storage.get('githubRepo');
+      if (!repoVal) {
+        showToast('Auto-save: no GitHub repo configured');
+        return;
+      }
+      try {
+        showToast('Auto-saving backup to GitHub...');
+        await this.storage.saveAllToGitHub();
+        showToast('Auto-save complete');
+      } catch (err) {
+        console.error('Auto-save failed', err);
+        showToast('Auto-save failed');
+      }
+    } catch (e) { console.error('maybeAutoSyncToGitHub failed', e); }
+  }
   }
 
   // quickSaveToGitHub removed; save/load lives in App Settings modal
