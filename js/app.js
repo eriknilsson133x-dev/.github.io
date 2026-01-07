@@ -51,7 +51,7 @@ class App {
 
     window.app = this;
     // attempt auto-load of GitHub backup if user enabled it in previous session
-    try { this.maybeAutoLoadGitHubBackup(); } catch (e) { /* ignore */ }
+    try { this.maybeAutoLoadBackup(); } catch (e) { /* ignore */ }
     // bind session renderer to instance to ensure method exists on the object
     if (typeof this.renderWorkoutSession === 'function') {
       this.renderWorkoutSession = this.renderWorkoutSession.bind(this);
@@ -96,26 +96,45 @@ class App {
 
   }
 
-  async maybeAutoLoadGitHubBackup() {
+  // Try to auto-load a backup on startup.
+  // First attempt to fetch a local `/data/backup.json` (or configured `githubPath`),
+  // then fall back to GitHub auto-load if configured.
+  async maybeAutoLoadBackup() {
     try {
+      const configuredPath = (this.storage.get('githubPath') || 'data/backup.json').replace(/^\/+/, '');
+      const localPath = '/' + configuredPath;
+      try {
+        const res = await fetch(localPath, { cache: 'no-store' });
+        if (res.ok) {
+          const parsed = await res.json();
+          this.storage.import(parsed);
+          console.debug('Auto-loaded local backup from', localPath);
+          if (typeof this.render === 'function') this.render();
+          return;
+        }
+      } catch (err) {
+        // local fetch failed or not present — continue to GitHub fallback
+        console.debug('Local backup not found at', localPath);
+      }
+
       const repoVal = this.storage.get('githubRepo');
-      const path = this.storage.get('githubPath') || 'data/backup.json';
-      const branch = this.storage.get('githubBranch') || 'main';
-      const token = this.storage.get('githubToken') || '';
       const autoLoad = !!this.storage.get('githubAutoLoad');
       if (!repoVal || !autoLoad) return;
       const parts = repoVal.split('/');
       if (parts.length < 2) return;
       const owner = parts[0];
       const repoName = parts.slice(1).join('/');
+      const path = this.storage.get('githubPath') || 'data/backup.json';
+      const branch = this.storage.get('githubBranch') || 'main';
+      const token = this.storage.get('githubToken') || undefined;
       try {
-        await this.storage.loadFromGitHub({ owner, repo: repoName, path, branch, token: token || undefined });
+        await this.storage.loadFromGitHub({ owner, repo: repoName, path, branch, token });
         console.debug('Auto-loaded GitHub backup', { owner, repo: repoName, path, branch });
         if (typeof this.render === 'function') this.render();
       } catch (err) {
         console.warn('Auto-load GitHub backup failed', err);
       }
-    } catch (e) { console.error('maybeAutoLoadGitHubBackup failed', e); }
+    } catch (e) { console.error('maybeAutoLoadBackup failed', e); }
   }
 
   // quickSaveToGitHub removed; save/load lives in App Settings modal
