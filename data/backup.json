@@ -51,6 +51,9 @@
     "2026-01-07": [
       "48fb9735-f5cb-42c7-a760-9252acffd091",
       "activity:recovery"
+    ],
+    "2026-01-08": [
+      "809403ab-6e27-4658-ae39-bf8c7985c277"
     ]
   },
   "planNotes": {
@@ -120,9 +123,26 @@
         "Set 1: 30 s",
         "Set 2: 30 s"
       ]
+    },
+    {
+      "date": "2026-01-07T12:04:37.704Z",
+      "workoutId": "809403ab-6e27-4658-ae39-bf8c7985c277",
+      "workoutName": "Pullups",
+      "bestValue": 0,
+      "isPR": true,
+      "summary": "5 sets: 5 reps @ 0 kg – NEW PR",
+      "details": [
+        "Set 1: 5 reps @ 0 kg",
+        "Set 2: 5 reps @ 0 kg",
+        "Set 3: 5 reps @ 0 kg",
+        "Set 4: 5 reps @ 0 kg",
+        "Set 5: 5 reps @ 0 kg"
+      ]
     }
   ],
-  "prs": {},
+  "prs": {
+    "809403ab-6e27-4658-ae39-bf8c7985c277": 0
+  },
   "userWorkouts": [
     {
       "id": "8777061b-63ed-4f98-93ca-69014551b5f8",
