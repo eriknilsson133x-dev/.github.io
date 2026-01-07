@@ -1,0 +1,185 @@
+{
+  "plan": {
+    "2026-01-03": [
+      "48fb9735-f5cb-42c7-a760-9252acffd091"
+    ],
+    "2026-01-04": [
+      "97a862cc-ced3-43b1-a3f3-674a0a9d437e",
+      "48fb9735-f5cb-42c7-a760-9252acffd091"
+    ],
+    "2026-01-06": [
+      "activity:recovery"
+    ]
+  },
+  "planRecurring": {
+    "0": [
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
+    ],
+    "1": [
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
+    ],
+    "2": [
+      "activity:board climbing",
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
+    ],
+    "3": [
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
+    ],
+    "4": [
+      "activity:climbing",
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "809403ab-6e27-4658-ae39-bf8c7985c277"
+    ],
+    "5": [
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
+    ],
+    "6": [
+      "48fb9735-f5cb-42c7-a760-9252acffd091",
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
+    ]
+  },
+  "planCompleted": {
+    "2026-01-04": [
+      "48fb9735-f5cb-42c7-a760-9252acffd091"
+    ],
+    "2026-01-05": [
+      "48fb9735-f5cb-42c7-a760-9252acffd091",
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
+    ],
+    "2026-01-06": [
+      "activity:test"
+    ],
+    "2026-01-07": [
+      "48fb9735-f5cb-42c7-a760-9252acffd091",
+      "activity:recovery"
+    ]
+  },
+  "planNotes": {
+    "2026-01-04": "Today was decent big boi MEEOW    aaa"
+  },
+  "activities": [
+    "stretching",
+    "rest",
+    "recovery",
+    "board climbing",
+    "climbing"
+  ],
+  "log": [
+    {
+      "id": "c96643ba-fdaf-40ce-a0f8-bcf1716d1578",
+      "date": "2026-01-05T21:03:21.184Z",
+      "isPR": false,
+      "details": [
+        "Set 1: 5 reps @ 0 kg",
+        "Set 2: 5 reps @ 0 kg",
+        "Set 3: 5 reps @ 0 kg",
+        "Set 4: 5 reps @ 0 kg",
+        "Set 5: 5 reps @ 0 kg"
+      ],
+      "summary": "5 sets: 5 reps @ 0 kg",
+      "bestValue": 0,
+      "workoutId": "809403ab-6e27-4658-ae39-bf8c7985c277",
+      "workoutName": "Pullups"
+    },
+    {
+      "id": "a21c3475-56bc-47f3-a55f-6b2b1fad87ca",
+      "date": "2026-01-05T19:53:51.978Z",
+      "isPR": false,
+      "details": [
+        "Set 1: 5 reps @ 5 kg",
+        "Set 2: 5 reps @ 5 kg",
+        "Set 3: 5 reps @ 5 kg",
+        "Set 4: 5 reps @ 5 kg",
+        "Set 5: 5 reps @ 5 kg"
+      ],
+      "summary": "5 sets: 5 reps @ 5 kg",
+      "bestValue": 5,
+      "workoutId": "809403ab-6e27-4658-ae39-bf8c7985c277",
+      "workoutName": "Pullups"
+    },
+    {
+      "id": "754315f2-a0d3-44ac-800f-567ac2279429",
+      "date": "2026-01-05T23:35:01.784Z",
+      "isPR": false,
+      "details": [
+        "Set 1: 30 s",
+        "Set 2: 30 s"
+      ],
+      "summary": "2 sets × 30 s",
+      "bestValue": 30,
+      "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "workoutName": "Science fingerboard"
+    }
+  ],
+  "prs": {},
+  "userWorkouts": [
+    {
+      "id": "8777061b-63ed-4f98-93ca-69014551b5f8",
+      "name": "Science fingerblock hang",
+      "reps": null,
+      "rest": 10,
+      "sets": 2,
+      "tool": "Finger block",
+      "type": "duration",
+      "weight": null,
+      "duration": 2,
+      "hasWeight": false,
+      "weightUnit": null,
+      "repeaterRest": null,
+      "repeaterWork": null,
+      "leftRightMode": true,
+      "repeaterCount": null
+    },
+    {
+      "id": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "name": "Science fingerboard",
+      "reps": null,
+      "rest": 120,
+      "sets": 2,
+      "tool": "Hangboard",
+      "type": "duration",
+      "weight": null,
+      "duration": 30,
+      "hasWeight": false,
+      "weightUnit": null,
+      "repeaterRest": null,
+      "repeaterWork": null,
+      "leftRightMode": false,
+      "repeaterCount": null
+    },
+    {
+      "id": "809403ab-6e27-4658-ae39-bf8c7985c277",
+      "name": "Pullups",
+      "reps": 5,
+      "rest": 180,
+      "sets": 5,
+      "tool": "Pull-up bar",
+      "type": "reps",
+      "duration": null,
+      "hasWeight": true,
+      "weightUnit": "kg",
+      "repeaterRest": null,
+      "repeaterWork": null,
+      "leftRightMode": false,
+      "repeaterCount": null
+    },
+    {
+      "id": "48fb9735-f5cb-42c7-a760-9252acffd091",
+      "name": "Maxhangs",
+      "reps": null,
+      "rest": 180,
+      "sets": 6,
+      "tool": "Hangboard",
+      "type": "duration",
+      "weight": 25,
+      "duration": 10,
+      "hasWeight": true,
+      "weightUnit": "kg",
+      "repeaterRest": null,
+      "repeaterWork": null,
+      "leftRightMode": false,
+      "repeaterCount": null
+    }
+  ],
+  "progressCategories": []
+}
