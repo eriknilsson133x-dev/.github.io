@@ -42,8 +42,7 @@ class App {
     window.addEventListener('storage:logsUpdated', () => {
       try { if (typeof this.render === 'function') this.render(); } catch (e) {}
       try { if (typeof this.renderPlanEditor === 'function') this.renderPlanEditor(); } catch (e) {}
-      // attempt auto-load of GitHub backup if user enabled it in previous session
-      try { this.maybeAutoLoadGitHubBackup(); } catch (e) { /* ignore */ }
+    });
     window.addEventListener('storage:allUpdated', () => {
       try { if (typeof this.render === 'function') this.render(); } catch (e) {}
       try { if (typeof this.renderPlanEditor === 'function') this.renderPlanEditor(); } catch (e) {}
