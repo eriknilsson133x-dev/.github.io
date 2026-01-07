@@ -42,7 +42,8 @@ class App {
     window.addEventListener('storage:logsUpdated', () => {
       try { if (typeof this.render === 'function') this.render(); } catch (e) {}
       try { if (typeof this.renderPlanEditor === 'function') this.renderPlanEditor(); } catch (e) {}
-    });
+      // attempt auto-load of GitHub backup if user enabled it in previous session
+      try { this.maybeAutoLoadGitHubBackup(); } catch (e) { /* ignore */ }
     window.addEventListener('storage:allUpdated', () => {
       try { if (typeof this.render === 'function') this.render(); } catch (e) {}
       try { if (typeof this.renderPlanEditor === 'function') this.renderPlanEditor(); } catch (e) {}
@@ -68,6 +69,25 @@ class App {
             </div>
             <div class="text-center py-12">
               <div class="text-4xl mb-6">Session</div>
+    async maybeAutoSyncToGitHub() {
+      try {
+        const enabled = !!this.storage.get('autoSyncAfterWorkout');
+        if (!enabled) return;
+        const repoVal = this.storage.get('githubRepo');
+        if (!repoVal) {
+          showToast('Auto-save: no GitHub repo configured');
+          return;
+        }
+        try {
+          showToast('Auto-saving backup to GitHub...');
+          await this.storage.saveAllToGitHub();
+          showToast('Auto-save complete');
+        } catch (err) {
+          console.error('Auto-save failed', err);
+          showToast('Auto-save failed');
+        }
+      } catch (e) { console.error('maybeAutoSyncToGitHub failed', e); }
+    }
             </div>
           </div>
         `;
@@ -941,14 +961,7 @@ class App {
       this.render();
       // Auto-sync to cloud in background after every finished workout
       try {
-        const enabled = !!this.storage.get('autoSyncAfterWorkout');
-        if (enabled && this.storage && typeof this.storage.syncAllToCloud === 'function') {
-          this.storage.syncAllToCloud().then(results => {
-            const ok = results && results.workouts && results.plan && results.logs;
-            if (ok) showToast('Auto-sync complete');
-            else showToast('Auto-sync partial/failed');
-          }).catch(err => { console.error('auto-sync failed', err); showToast('Auto-sync failed'); });
-        }
+        this.maybeAutoSyncToGitHub();
       } catch (e) { console.error('auto-sync scheduling failed', e); }
     } else {
       this.showPostWorkoutNoteModal((note) => {
@@ -970,16 +983,9 @@ class App {
         }
         this.state.tab = 'log';
         this.render();
-        // Auto-sync to cloud in background after every finished workout
+        // Auto-save backup to GitHub (if enabled)
         try {
-          const enabled = !!this.storage.get('autoSyncAfterWorkout');
-          if (enabled && this.storage && typeof this.storage.syncAllToCloud === 'function') {
-            this.storage.syncAllToCloud().then(results => {
-              const ok = results && results.workouts && results.plan && results.logs;
-              if (ok) showToast('Auto-sync complete');
-              else showToast('Auto-sync partial/failed');
-            }).catch(err => { console.error('auto-sync failed', err); showToast('Auto-sync failed'); });
-          }
+          this.maybeAutoSyncToGitHub();
         } catch (e) { console.error('auto-sync scheduling failed', e); }
       });
     }

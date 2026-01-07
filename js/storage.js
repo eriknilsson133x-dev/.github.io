@@ -75,171 +75,48 @@ export class Storage {
     try { window.dispatchEvent(new CustomEvent('storage:allUpdated', { detail: { source: 'import' } })); } catch (e) { /* ignore */ }
   }
 
-  // Cloud sync helpers (Supabase). Dynamically import `js/supabase.js` so the app can run without cloud keys.
+  // Supabase cloud helpers removed — provide no-op stubs to avoid runtime errors
   async syncWorkoutsToCloud() {
-    try {
-      const mod = await import('./supabase.js');
-      const workouts = this.get('userWorkouts') || [];
-      for (const w of workouts) {
-        if (!w.id) w.id = crypto.randomUUID();
-        await mod.upsertCloudWorkout(w);
-      }
-      return true;
-    } catch (err) {
-      console.error('syncWorkoutsToCloud failed', err);
-      return false;
-    }
+    console.warn('syncWorkoutsToCloud: Supabase integration removed — no-op');
+    return false;
   }
 
   async fetchWorkoutsFromCloud() {
-    try {
-      const mod = await import('./supabase.js');
-      const rows = await mod.fetchCloudWorkouts();
-      // rows expected shape: { id, data, updated }
-      const workouts = (rows || []).map(r => (r.data ? r.data : r));
-      this.set('userWorkouts', workouts);
-      // notify UI that workouts changed
-      try { window.dispatchEvent(new CustomEvent('storage:workoutsUpdated', { detail: { source: 'cloud' } })); } catch (e) { /* ignore */ }
-      return workouts;
-    } catch (err) {
-      console.error('fetchWorkoutsFromCloud failed', err);
-      return null;
-    }
+    console.warn('fetchWorkoutsFromCloud: Supabase integration removed — no-op');
+    return null;
   }
 
   // Plan sync
   async syncPlanToCloud() {
-    try {
-      const mod = await import('./supabase.js');
-      const plan = this.get('plan') || {};
-      const planRecurring = this.get('planRecurring') || {};
-      const planCompleted = this.get('planCompleted') || {};
-      const planNotes = this.get('planNotes') || {};
-      const activities = this.get('activities') || [];
-      const payload = {
-        id: 'user-plan',
-        data: { plan, planRecurring, planCompleted, planNotes, activities },
-        updated: Date.now()
-      };
-      const res = await mod.upsertCloudPlan(payload);
-      if (!res || (Array.isArray(res) && res.length === 0)) {
-        console.error('syncPlanToCloud: upsert returned empty result', res);
-        return false;
-      }
-      console.debug('syncPlanToCloud: upsert result', res);
-      // Ensure recurring workouts referenced by the plan are also uploaded
-      try {
-        const recurringIds = Object.values(planRecurring).flat().filter(Boolean);
-        const uniqIds = Array.from(new Set(recurringIds));
-        const workouts = this.get('userWorkouts') || [];
-        for (const id of uniqIds) {
-          const w = workouts.find(x => x.id === id);
-          if (w) {
-            try { await mod.upsertCloudWorkout(w); } catch (e) { console.warn('failed to upsert recurring workout', id, e); }
-          }
-        }
-      } catch (e) { console.warn('syncPlanToCloud: failed to sync recurring workouts', e); }
-
-      return true;
-    } catch (err) {
-      console.error('syncPlanToCloud failed', err);
-      return false;
-    }
+    console.warn('syncPlanToCloud: Supabase integration removed — no-op');
+    return false;
   }
 
   async fetchPlanFromCloud() {
-    try {
-      const mod = await import('./supabase.js');
-      const rows = await mod.fetchCloudPlans();
-      console.debug('fetchPlanFromCloud: rows from server', rows);
-      if (!rows || !rows.length) return null;
-      // prefer id 'user-plan' if present
-      const row = rows.find(r => r.id === 'user-plan') || rows[0];
-      const planData = row && row.data ? row.data : null;
-      console.debug('fetchPlanFromCloud: chosen plan', row);
-      // planData may contain multiple keys (plan, planRecurring, planCompleted, planNotes, activities)
-      if (planData && typeof planData === 'object' && planData.plan) {
-        this.set('plan', planData.plan || {});
-        if (planData.planRecurring) this.set('planRecurring', planData.planRecurring);
-        if (planData.planCompleted) this.set('planCompleted', planData.planCompleted);
-        if (planData.planNotes) this.set('planNotes', planData.planNotes);
-        if (planData.activities) this.set('activities', planData.activities);
-      } else {
-        // support older or alternate shape where activities may be a top-level column
-        if (row && row.activities) this.set('activities', row.activities || []);
-        // older shape: the row data is the plan itself
-        this.set('plan', planData || row || {});
-      }
-      // notify UI that plan changed
-      try { window.dispatchEvent(new CustomEvent('storage:planUpdated', { detail: { source: 'cloud' } })); } catch (e) { /* ignore */ }
-      // return the currently stored plan
-      return this.get('plan');
-    } catch (err) {
-      console.error('fetchPlanFromCloud failed', err);
-      return null;
-    }
+    console.warn('fetchPlanFromCloud: Supabase integration removed — no-op');
+    return null;
   }
 
   // Logs sync
   async syncLogsToCloud() {
-    try {
-      const mod = await import('./supabase.js');
-      const logs = this.get('log') || [];
-      for (const l of logs) {
-        if (!l.id) l.id = crypto.randomUUID();
-        await mod.upsertCloudLog(l);
-      }
-      return true;
-    } catch (err) {
-      console.error('syncLogsToCloud failed', err);
-      return false;
-    }
+    console.warn('syncLogsToCloud: Supabase integration removed — no-op');
+    return false;
   }
 
   async fetchLogsFromCloud() {
-    try {
-      const mod = await import('./supabase.js');
-      const rows = await mod.fetchCloudLogs();
-      const logs = (rows || []).map(r => (r.data ? r.data : r));
-      this.set('log', logs);
-      // notify UI that logs changed
-      try { window.dispatchEvent(new CustomEvent('storage:logsUpdated', { detail: { source: 'cloud' } })); } catch (e) { /* ignore */ }
-      return logs;
-    } catch (err) {
-      console.error('fetchLogsFromCloud failed', err);
-      return null;
-    }
+    console.warn('fetchLogsFromCloud: Supabase integration removed — no-op');
+    return null;
   }
 
   // Orchestrators
   async syncAllToCloud() {
-    const results = { workouts: false, plan: false, logs: false };
-    try {
-      results.workouts = await this.syncWorkoutsToCloud();
-    } catch (e) { console.error('syncAll: workouts failed', e); }
-    try {
-      results.plan = await this.syncPlanToCloud();
-    } catch (e) { console.error('syncAll: plan failed', e); }
-    try {
-      results.logs = await this.syncLogsToCloud();
-    } catch (e) { console.error('syncAll: logs failed', e); }
-    return results;
+    console.warn('syncAllToCloud: Supabase integration removed — no-op');
+    return { workouts: false, plan: false, logs: false };
   }
 
   async fetchAllFromCloud() {
-    const results = { workouts: null, plan: null, logs: null };
-    try {
-      results.workouts = await this.fetchWorkoutsFromCloud();
-    } catch (e) { console.error('fetchAll: workouts failed', e); }
-    try {
-      results.plan = await this.fetchPlanFromCloud();
-    } catch (e) { console.error('fetchAll: plan failed', e); }
-    try {
-      results.logs = await this.fetchLogsFromCloud();
-    } catch (e) { console.error('fetchAll: logs failed', e); }
-    // notify UI that a full fetch completed
-    try { window.dispatchEvent(new CustomEvent('storage:allUpdated', { detail: { source: 'cloud', results } })); } catch (e) { /* ignore */ }
-    return results;
+    console.warn('fetchAllFromCloud: Supabase integration removed — no-op');
+    return { workouts: null, plan: null, logs: null };
   }
 
   // Save exported data to a file in a GitHub repository using the Contents API.
@@ -309,6 +186,26 @@ export class Storage {
       return parsed;
     } catch (err) {
       console.error('loadFromGitHub failed', err);
+      throw err;
+    }
+  }
+
+  // Save full backup using saved GitHub settings in localStorage
+  async saveAllToGitHub() {
+    try {
+      const repoVal = this.get('githubRepo');
+      if (!repoVal) throw new Error('No GitHub repo configured');
+      const parts = repoVal.split('/');
+      if (parts.length < 2) throw new Error('Repo must be in owner/repo format');
+      const owner = parts[0];
+      const repo = parts.slice(1).join('/');
+      const path = this.get('githubPath') || 'data/backup.json';
+      const branch = this.get('githubBranch') || 'main';
+      const token = this.get('githubToken') || undefined;
+      const message = this.get('githubMessage') || 'crimpd backup from web';
+      return await this.saveToGitHub({ owner, repo, path, branch, token, message });
+    } catch (err) {
+      console.error('saveAllToGitHub failed', err);
       throw err;
     }
   }
