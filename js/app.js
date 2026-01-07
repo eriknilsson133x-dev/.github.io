@@ -174,9 +174,8 @@ class App {
     const impBtn = modal.querySelector('#importBackupBtn');
     if (impBtn) impBtn.onclick = () => { try { this.logger.importData(); } catch (err) { console.error(err); alert('Import failed'); } };
 
-    // GitHub Save / Load — friendly inline form
-    const importExportRow = modal.querySelector('.mb-6');
-    if (importExportRow) {
+    // GitHub Save / Load — friendly inline form (insert reliably)
+    {
       const ghForm = document.createElement('div');
       ghForm.className = 'mt-3 p-3 bg-gray-700 rounded';
       const savedToken = this.storage.get('githubToken') || '';
@@ -198,8 +197,8 @@ class App {
       `;
 
       const footer = modal.querySelector('.flex.justify-end.gap-3.mt-6');
-      if (footer) footer.parentElement.insertBefore(ghForm, footer);
-      else importExportRow.parentElement.insertBefore(ghForm, importExportRow.nextSibling);
+      if (footer && footer.parentElement) footer.parentElement.insertBefore(ghForm, footer);
+      else modal.appendChild(ghForm);
 
       const ghSave = ghForm.querySelector('#gh-save');
       const ghLoad = ghForm.querySelector('#gh-load');
