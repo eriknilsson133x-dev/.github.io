@@ -16,6 +16,10 @@ class App {
     this.timer = null;
     this.calendar = new Calendar(this.storage);
     this.logger = new Logger(this.storage);
+    // Wake lock helpers
+    this.wakeLockSentinel = null;
+    this._wakeLockActive = false;
+    this.noSleep = null; // fallback
 
     this.state = {
       tab: 'plan',
@@ -74,6 +78,98 @@ class App {
       };
     }
 
+    // Re-acquire a wake lock after visibility changes if we were keeping device awake
+    document.addEventListener('visibilitychange', async () => {
+      try {
+        if (document.visibilityState === 'visible' && this._wakeLockActive) {
+          await this.requestWakeLock();
+        }
+      } catch (e) { /* ignore */ }
+    });
+
+  }
+
+  // NoSleep fallback using the video trick similar to NoSleep.js.
+  // Creates a tiny hidden looping video element that plays a silent WebM to keep the device awake.
+  _ensureNoSleep() {
+    if (this.noSleep) return;
+    this.noSleep = {
+      _video: null,
+      enabled: false,
+      enable() {
+        try {
+          if (this._video) return;
+          const v = document.createElement('video');
+          v.setAttribute('playsinline', '');
+          v.setAttribute('muted', '');
+          v.loop = true;
+          v.style.width = '1px';
+          v.style.height = '1px';
+          v.style.opacity = '0';
+          v.style.position = 'fixed';
+          v.style.right = '0';
+          v.style.bottom = '0';
+          // tiny silent webm data URI (1s of silence) - small and widely supported
+          v.src = 'data:video/webm;base64,GkXfo0AgQoaBAUL+AAAAAAABAAEAAQAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+          v.play().catch(() => {});
+          document.body.appendChild(v);
+          this._video = v;
+          this.enabled = true;
+        } catch (e) {
+          // ignore
+        }
+      },
+      disable() {
+        try {
+          if (this._video) {
+            try { this._video.pause(); } catch (e) {}
+            try { this._video.removeAttribute('src'); } catch (e) {}
+            if (this._video.parentNode) this._video.parentNode.removeChild(this._video);
+            this._video = null;
+          }
+        } catch (e) {}
+        this.enabled = false;
+      }
+    };
+  }
+
+  async requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator && navigator.wakeLock.request) {
+        try {
+          this.wakeLockSentinel = await navigator.wakeLock.request('screen');
+          this._wakeLockActive = true;
+          // when released by UA, mark inactive
+          if (this.wakeLockSentinel && this.wakeLockSentinel.addEventListener) {
+            this.wakeLockSentinel.addEventListener('release', () => { this._wakeLockActive = false; });
+          }
+          return;
+        } catch (e) {
+          // fall through to fallback
+          console.warn('Screen Wake Lock request failed', e);
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    // Fallback: enable NoSleep via hidden video trick
+    try {
+      this._ensureNoSleep();
+      if (this.noSleep && !this.noSleep.enabled) this.noSleep.enable();
+      this._wakeLockActive = true;
+    } catch (e) { /* ignore */ }
+  }
+
+  async releaseWakeLock() {
+    try {
+      if (this.wakeLockSentinel && this.wakeLockSentinel.release) {
+        try { await this.wakeLockSentinel.release(); } catch (e) {}
+        this.wakeLockSentinel = null;
+      }
+    } catch (e) { /* ignore */ }
+    try {
+      if (this.noSleep && this.noSleep.enabled) this.noSleep.disable();
+    } catch (e) { /* ignore */ }
+    this._wakeLockActive = false;
   }
 
   // Try to auto-load a backup on startup.
@@ -171,14 +267,15 @@ class App {
         const ghTokenEl = modal.querySelector('#gh-token');
         if (ghTokenEl) {
           const token = (ghTokenEl.value || '').trim();
-          const remember = !!modal.querySelector('#gh-remember')?.checked;
+          const rememberEl = modal.querySelector('#gh-remember');
+          const remember = !!(rememberEl && rememberEl.checked);
           if (remember && token) this.storage.set('githubToken', token);
           else this.storage.clear('githubToken');
 
-          const repoVal = (modal.querySelector('#gh-repo')?.value || '').trim();
-          const pathVal = (modal.querySelector('#gh-path')?.value || '').trim();
-          const branchVal = (modal.querySelector('#gh-branch')?.value || '').trim();
-          const msgVal = (modal.querySelector('#gh-message')?.value || '').trim();
+          const repoVal = ((modal.querySelector('#gh-repo') && modal.querySelector('#gh-repo').value) || '').trim();
+          const pathVal = ((modal.querySelector('#gh-path') && modal.querySelector('#gh-path').value) || '').trim();
+          const branchVal = ((modal.querySelector('#gh-branch') && modal.querySelector('#gh-branch').value) || '').trim();
+          const msgVal = ((modal.querySelector('#gh-message') && modal.querySelector('#gh-message').value) || '').trim();
           if (repoVal) this.storage.set('githubRepo', repoVal);
           if (pathVal) this.storage.set('githubPath', pathVal);
           if (branchVal) this.storage.set('githubBranch', branchVal);
@@ -267,7 +364,8 @@ class App {
             const token = ghForm.querySelector('#gh-token').value.trim();
             const remember = ghForm.querySelector('#gh-remember').checked;
             const message = ghForm.querySelector('#gh-message').value.trim() || 'crimpd backup from web';
-            const autoLoad = !!ghForm.querySelector('#gh-autoload')?.checked;
+            const autoLoadEl = ghForm.querySelector('#gh-autoload');
+            const autoLoad = !!(autoLoadEl && autoLoadEl.checked);
           if (!repoVal || !path) return alert('Please provide repo and path');
           const parts = repoVal.split('/');
           if (parts.length < 2) return alert('Repo must be in owner/repo format');
@@ -296,7 +394,8 @@ class App {
           const repo = parts.slice(1).join('/');
           if (!confirm('This will overwrite local data with the GitHub file. Continue?')) return;
           if (ghForm.querySelector('#gh-remember').checked && token) this.storage.set('githubToken', token);
-          const autoLoad = !!ghForm.querySelector('#gh-autoload')?.checked;
+          const autoLoadEl = ghForm.querySelector('#gh-autoload');
+          const autoLoad = !!(autoLoadEl && autoLoadEl.checked);
           this.storage.set('githubAutoLoad', !!autoLoad);
           const parsed = await this.storage.loadFromGitHub({ owner, repo, path, branch, token });
           alert('Loaded data from GitHub');
@@ -518,7 +617,7 @@ class App {
     event.preventDefault();
     const formData = new FormData(event.target);
     const workout = {
-      id: this.state.editingWorkout?.id || generateId(),
+      id: (this.state.editingWorkout && this.state.editingWorkout.id) || generateId(),
       name: formData.get('name'),
       tool: formData.get('tool'),
       sets: parseInt(formData.get('sets')),
@@ -630,6 +729,8 @@ class App {
       ts.inputs = ts.inputs || [];
     }
     this.render();
+    // Try to keep device awake during active session
+    try { this.requestWakeLock(); } catch (e) { /* ignore */ }
   }
 
   startTimer() {
@@ -777,7 +878,7 @@ class App {
     if (!ts) return;
     const total = Math.max(1, ts.totalSets || 1);
     if (!Array.isArray(ts.repsChecked) || ts.repsChecked.length !== total) ts.repsChecked = new Array(total).fill(false);
-    if (!Array.isArray(ts.inputs) || ts.inputs.length !== total) ts.inputs = new Array(total).fill(ts.workout?.reps || 0);
+    if (!Array.isArray(ts.inputs) || ts.inputs.length !== total) ts.inputs = new Array(total).fill((ts.workout && ts.workout.reps) || 0);
     ts.repsChecked[index] = !ts.repsChecked[index];
     // if checked but input is empty, initialize with workout default
     if (ts.repsChecked[index] && (ts.inputs[index] === undefined || ts.inputs[index] === null)) {
@@ -800,7 +901,7 @@ class App {
     const ts = this.state.timerState;
     if (!ts) return;
     const total = Math.max(1, ts.totalSets || 1);
-    if (!Array.isArray(ts.inputs) || ts.inputs.length !== total) ts.inputs = new Array(total).fill(ts.workout?.reps || 0);
+    if (!Array.isArray(ts.inputs) || ts.inputs.length !== total) ts.inputs = new Array(total).fill((ts.workout && ts.workout.reps) || 0);
     ts.inputs[index] = parseInt(value, 10) || 0;
     this.render();
   }
@@ -810,7 +911,7 @@ class App {
     const ts = this.state.timerState;
     if (!ts) return;
     const total = Math.max(1, ts.totalSets || 1);
-    if (!Array.isArray(ts.inputs) || ts.inputs.length !== total) ts.inputs = new Array(total).fill(ts.workout?.reps || 0);
+    if (!Array.isArray(ts.inputs) || ts.inputs.length !== total) ts.inputs = new Array(total).fill((ts.workout && ts.workout.reps) || 0);
     ts.inputs[index] = Math.max(0, (ts.inputs[index] || 0) + delta);
     this.render();
   }
@@ -878,9 +979,10 @@ class App {
   }
 
   cancelWorkout() {
-    if (this.state.timerState?.timer) clearInterval(this.state.timerState.timer);
+    if (this.state.timerState && this.state.timerState.timer) clearInterval(this.state.timerState.timer);
     this.state.activeWorkout = null;
     this.state.timerState = null;
+    try { this.releaseWakeLock(); } catch (e) {}
     this.render();
   }
 
@@ -978,6 +1080,7 @@ class App {
         this.storage.saveUserWorkout(workout);
       }
       this.state.tab = 'log';
+      try { this.releaseWakeLock(); } catch (e) {}
       this.render();
       // Auto-sync to cloud in background after every finished workout
       try {
@@ -1002,6 +1105,7 @@ class App {
           this.storage.saveUserWorkout(workout);
         }
         this.state.tab = 'log';
+        try { this.releaseWakeLock(); } catch (e) {}
         this.render();
         // Auto-save backup to GitHub (if enabled)
         try {
@@ -1073,7 +1177,7 @@ class App {
             <div class="text-sm text-gray-400 mb-2">Set</div>
             <div class="text-2xl">${ts.currentSet + 1} of ${ts.totalSets}</div>
           </div>
-          ${w.hasWeight ? `<div class="mb-4">Weight: ${ts.presetWeight ?? w.weight ?? 0} ${w.weightUnit || 'kg'}</div>` : ''}
+          ${w.hasWeight ? `<div class="mb-4">Weight: ${ (ts.presetWeight !== undefined && ts.presetWeight !== null) ? ts.presetWeight : ((w.weight !== undefined && w.weight !== null) ? w.weight : 0) } ${w.weightUnit || 'kg'}</div>` : ''}
           ${(w.type === 'repeaters') ? `
             <div class="mb-4 text-center">
               <div class="text-sm text-gray-400 mb-2">Cycle</div>
@@ -1235,7 +1339,7 @@ class App {
               class="bg-gray-800 p-6 rounded-lg space-y-4">
           <div>
             <label class="block mb-2 font-medium">Name *</label>
-            <input type="text" name="name" value="${ed?.name || ''}"
+            <input type="text" name="name" value="${(ed && ed.name) || ''}"
                    class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px" required>
           </div>
           <div>
@@ -1243,12 +1347,12 @@ class App {
             <select name="tool" class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px" required>
               <option value="">Select tool</option>
               ${['Hangboard','Pull-up bar','Barbell','Dumbbell','Cable','Body-weight','Campus','Finger block','Other']
-                .map(t => `<option value="${t}" ${ed?.tool === t ? 'selected' : ''}>${t}</option>`).join('')}
+                .map(t => `<option value="${t}" ${(ed && ed.tool) === t ? 'selected' : ''}>${t}</option>`).join('')}
             </select>
           </div>
-          <div id="fingerBlockMode" style="display:${ed?.tool === 'Finger block' ? 'block' : 'none'}">
+          <div id="fingerBlockMode" style="display:${(ed && ed.tool) === 'Finger block' ? 'block' : 'none'}">
             <label class="flex items-center p-3 bg-gray-700 rounded cursor-pointer" style="min-height:48px">
-              <input type="checkbox" name="leftRightMode" ${ed?.leftRightMode ? 'checked' : ''} class="mr-3">
+              <input type="checkbox" name="leftRightMode" ${(ed && ed.leftRightMode) ? 'checked' : ''} class="mr-3">
               <span>Left / Right hand mode</span>
             </label>
           </div>
@@ -1258,60 +1362,60 @@ class App {
               ${WORKOUT_TYPES.map(t => `
                 <label class="flex items-center p-3 bg-gray-700 rounded cursor-pointer" style="min-height:48px">
                   <input type="radio" name="type" value="${t.value}"
-                         ${ed?.type === t.value ? 'checked' : ''} class="mr-3">
+                         ${(ed && ed.type) === t.value ? 'checked' : ''} class="mr-3">
                   <span>${t.label}</span>
                 </label>`).join('')}
             </div>
           </div>
           <div>
             <label class="block mb-2 font-medium">Sets *</label>
-            <input type="number" name="sets" value="${ed?.sets || 1}" min="1"
+            <input type="number" name="sets" value="${(ed && ed.sets) || 1}" min="1"
                    class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px" required>
           </div>
-          <div id="duration-input" style="display:${ed?.type==='duration'||ed?.type==='both'?'block':'none'}">
+          <div id="duration-input" style="display:${(ed && (ed.type==='duration'||ed.type==='both'))?'block':'none'}">
             <label class="block mb-2 font-medium">Duration (seconds)</label>
-            <input type="number" name="duration" value="${ed?.duration || ''}" min="1"
+            <input type="number" name="duration" value="${(ed && ed.duration) || ''}" min="1"
                    class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
           </div>
-          <div id="reps-input" style="display:${ed?.type==='reps'||ed?.type==='both'?'block':'none'}">
+          <div id="reps-input" style="display:${(ed && (ed.type==='reps'||ed.type==='both'))?'block':'none'}">
             <label class="block mb-2 font-medium">Reps</label>
-            <input type="number" name="reps" value="${ed?.reps || ''}" min="1"
+            <input type="number" name="reps" value="${(ed && ed.reps) || ''}" min="1"
                    class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
           </div>
-          <div id="repeaters-input" style="display:${ed?.type==='repeaters'?'block':'none'}">
+          <div id="repeaters-input" style="display:${(ed && ed.type==='repeaters')?'block':'none'}">
             <label class="block mb-2 font-medium">Number of repeater cycles</label>
-            <input type="number" name="repeaterCount" value="${ed?.repeaterCount || 10}" min="1"
+            <input type="number" name="repeaterCount" value="${(ed && ed.repeaterCount) || 10}" min="1"
                    class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
             <label class="block mb-2 font-medium mt-3">Work time (seconds)</label>
-            <input type="number" name="repeaterWork" value="${ed?.repeaterWork || 7}" min="1"
+            <input type="number" name="repeaterWork" value="${(ed && ed.repeaterWork) || 7}" min="1"
                    class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
             <label class="block mb-2 font-medium mt-3">Rest time (seconds)</label>
-            <input type="number" name="repeaterRest" value="${ed?.repeaterRest || 3}" min="1"
+            <input type="number" name="repeaterRest" value="${(ed && ed.repeaterRest) || 3}" min="1"
                    class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
           </div>
           <div>
             <label class="flex items-center p-3 bg-gray-700 rounded cursor-pointer mb-3" style="min-height:48px">
-              <input type="checkbox" name="hasWeight" ${ed?.hasWeight ? 'checked' : ''} class="mr-3">
+              <input type="checkbox" name="hasWeight" ${(ed && ed.hasWeight) ? 'checked' : ''} class="mr-3">
               <span>Track added weight</span>
             </label>
-            <div id="weight-inputs" style="display:${ed?.hasWeight?'block':'none'}" class="space-y-3 ml-4">
+            <div id="weight-inputs" style="display:${(ed && ed.hasWeight)?'block':'none'}" class="space-y-3 ml-4">
               <div>
                 <label class="block mb-2 font-medium">Weight</label>
-                <input type="number" name="weight" value="${ed?.weight || ''}" step="0.5" min="0"
+                <input type="number" name="weight" value="${(ed && ed.weight) || ''}" step="0.5" min="0"
                        class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
               </div>
               <div>
                 <label class="block mb-2 font-medium">Weight Unit</label>
                 <select name="weightUnit" class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
-                  <option value="kg" ${ed?.weightUnit === 'kg' ? 'selected' : ''}>kg</option>
-                  <option value="lbs" ${ed?.weightUnit === 'lbs' ? 'selected' : ''}>lbs</option>
+                  <option value="kg" ${(ed && ed.weightUnit) === 'kg' ? 'selected' : ''}>kg</option>
+                  <option value="lbs" ${(ed && ed.weightUnit) === 'lbs' ? 'selected' : ''}>lbs</option>
                 </select>
               </div>
             </div>
           </div>
           <div id="rest-input">
             <label class="block mb-2 font-medium">Rest between sets (seconds) *</label>
-            <input type="number" name="rest" value="${ed?.rest || 180}" min="0"
+                 <input type="number" name="rest" value="${(ed && ed.rest) || 180}" min="0"
                    class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px" required>
           </div>
           <div class="flex gap-3 pt-4">
