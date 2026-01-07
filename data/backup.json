@@ -6,9 +6,6 @@
     "2026-01-04": [
       "97a862cc-ced3-43b1-a3f3-674a0a9d437e",
       "48fb9735-f5cb-42c7-a760-9252acffd091"
-    ],
-    "2026-01-06": [
-      "activity:recovery"
     ]
   },
   "planRecurring": {
@@ -47,7 +44,9 @@
       "0e4adb9e-37ef-4697-a180-0d93927f7db6"
     ],
     "2026-01-06": [
-      "activity:test"
+      "activity:test",
+      "activity:board climbing",
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
     ],
     "2026-01-07": [
       "48fb9735-f5cb-42c7-a760-9252acffd091",
@@ -109,6 +108,18 @@
       "bestValue": 30,
       "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
       "workoutName": "Science fingerboard"
+    },
+    {
+      "date": "2026-01-07T11:52:14.572Z",
+      "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "workoutName": "Science fingerboard",
+      "bestValue": 30,
+      "isPR": false,
+      "summary": "2 sets × 30 s",
+      "details": [
+        "Set 1: 30 s",
+        "Set 2: 30 s"
+      ]
     }
   ],
   "prs": {},
