@@ -136,7 +136,7 @@ class App {
       }
     } catch (e) { console.error('maybeAutoSyncToGitHub failed', e); }
   }
-  }
+
 
   // quickSaveToGitHub removed; save/load lives in App Settings modal
 
