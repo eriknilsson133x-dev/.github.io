@@ -172,53 +172,73 @@ class App {
     const impBtn = modal.querySelector('#importBackupBtn');
     if (impBtn) impBtn.onclick = () => { try { this.logger.importData(); } catch (err) { console.error(err); alert('Import failed'); } };
 
-    // GitHub Save / Load
-    const saveGhBtn = document.createElement('button');
-    saveGhBtn.className = 'px-4 py-2 bg-green-600 text-white rounded';
-    saveGhBtn.textContent = 'Save to GitHub';
-    saveGhBtn.onclick = async () => {
-      try {
-        const repo = prompt('Enter repo (owner/repo)', 'eriknilsson133x-dev/.github.io');
-        if (!repo) return;
-        const path = prompt('Enter file path (e.g. data/backup.json)', 'data/backup.json');
-        if (!path) return;
-        const branch = prompt('Enter branch', 'main') || 'main';
-        const token = prompt('Enter personal access token (scopes: repo) — this will be stored in memory only');
-        if (!token) return alert('Token required');
-        const message = prompt('Commit message', 'crimpd backup from web');
-        const [owner, r] = repo.split('/');
-        const res = await this.storage.saveToGitHub({ owner, repo: r, path, branch, token, message });
-        alert('Saved to GitHub: ' + (res && res.content && res.content.path ? res.content.path : 'ok'));
-      } catch (err) { console.error(err); alert('Save to GitHub failed: ' + (err && err.message)); }
-    };
-
-    const loadGhBtn = document.createElement('button');
-    loadGhBtn.className = 'px-4 py-2 bg-yellow-600 text-white rounded';
-    loadGhBtn.textContent = 'Load from GitHub';
-    loadGhBtn.onclick = async () => {
-      try {
-        const repo = prompt('Enter repo (owner/repo)', 'eriknilsson133x-dev/.github.io');
-        if (!repo) return;
-        const path = prompt('Enter file path (e.g. data/backup.json)', 'data/backup.json');
-        if (!path) return;
-        const branch = prompt('Enter branch', 'main') || 'main';
-        const token = prompt('Enter personal access token (optional)');
-        const [owner, r] = repo.split('/');
-        if (!confirm('This will overwrite local data with the GitHub file. Continue?')) return;
-        const parsed = await this.storage.loadFromGitHub({ owner, repo: r, path, branch, token });
-        alert('Loaded data from GitHub');
-        if (window.app && typeof window.app.render === 'function') window.app.render();
-      } catch (err) { console.error(err); alert('Load from GitHub failed: ' + (err && err.message)); }
-    };
-
-    // append GitHub buttons next to import/export
+    // GitHub Save / Load — friendly inline form
     const importExportRow = modal.querySelector('.mb-6');
     if (importExportRow) {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'flex gap-2';
-      wrapper.appendChild(saveGhBtn);
-      wrapper.appendChild(loadGhBtn);
-      importExportRow.parentElement.insertBefore(wrapper, importExportRow.nextSibling);
+      const ghForm = document.createElement('div');
+      ghForm.className = 'mt-3 p-3 bg-gray-700 rounded';
+      const savedToken = this.storage.get('githubToken') || '';
+      ghForm.innerHTML = `
+        <div class="text-sm font-semibold mb-2">Backup to GitHub</div>
+        <div class="grid grid-cols-1 gap-2">
+          <input id="gh-repo" class="p-2 bg-gray-600 rounded text-gray-100" placeholder="owner/repo" value="eriknilsson133x-dev/.github.io">
+          <input id="gh-path" class="p-2 bg-gray-600 rounded text-gray-100" placeholder="path (e.g. data/backup.json)" value="data/backup.json">
+          <input id="gh-branch" class="p-2 bg-gray-600 rounded text-gray-100" placeholder="branch" value="main">
+          <input id="gh-token" class="p-2 bg-gray-600 rounded text-gray-100" placeholder="Personal access token (optional for public repo)" value="${savedToken}">
+          <label class="flex items-center gap-2 text-sm"><input id="gh-remember" type="checkbox" ${savedToken ? 'checked' : ''}> Remember token in browser (localStorage)</label>
+          <input id="gh-message" class="p-2 bg-gray-600 rounded text-gray-100" placeholder="Commit message" value="crimpd backup from web">
+          <div class="flex gap-2">
+            <button id="gh-save" class="px-4 py-2 bg-green-600 text-white rounded">Save to GitHub</button>
+            <button id="gh-load" class="px-4 py-2 bg-yellow-600 text-white rounded">Load from GitHub</button>
+          </div>
+          <div class="text-xs text-gray-400">Token scope: use <strong>public_repo</strong> for public repos or <strong>repo</strong> for private repos. The token is sent directly to GitHub and (optionally) stored locally if you check "Remember".</div>
+        </div>
+      `;
+
+      importExportRow.parentElement.insertBefore(ghForm, importExportRow.nextSibling);
+
+      const ghSave = ghForm.querySelector('#gh-save');
+      const ghLoad = ghForm.querySelector('#gh-load');
+      ghSave.addEventListener('click', async () => {
+        try {
+          const repoVal = ghForm.querySelector('#gh-repo').value.trim();
+          const path = ghForm.querySelector('#gh-path').value.trim();
+          const branch = ghForm.querySelector('#gh-branch').value.trim() || 'main';
+          const token = ghForm.querySelector('#gh-token').value.trim();
+          const remember = ghForm.querySelector('#gh-remember').checked;
+          const message = ghForm.querySelector('#gh-message').value.trim() || 'crimpd backup from web';
+          if (!repoVal || !path) return alert('Please provide repo and path');
+          const parts = repoVal.split('/');
+          if (parts.length < 2) return alert('Repo must be in owner/repo format');
+          const owner = parts[0];
+          const repo = parts.slice(1).join('/');
+          if (!token) {
+            if (!confirm('No token provided. Saving to a public repo without token may fail. Continue?')) return;
+          }
+          if (remember && token) this.storage.set('githubToken', token); else this.storage.clear('githubToken');
+          await this.storage.saveToGitHub({ owner, repo, path, branch, token, message });
+          alert('Saved to GitHub');
+        } catch (err) { console.error(err); alert('Save to GitHub failed: ' + (err && err.message)); }
+      });
+
+      ghLoad.addEventListener('click', async () => {
+        try {
+          const repoVal = ghForm.querySelector('#gh-repo').value.trim();
+          const path = ghForm.querySelector('#gh-path').value.trim();
+          const branch = ghForm.querySelector('#gh-branch').value.trim() || 'main';
+          const token = ghForm.querySelector('#gh-token').value.trim();
+          if (!repoVal || !path) return alert('Please provide repo and path');
+          const parts = repoVal.split('/');
+          if (parts.length < 2) return alert('Repo must be in owner/repo format');
+          const owner = parts[0];
+          const repo = parts.slice(1).join('/');
+          if (!confirm('This will overwrite local data with the GitHub file. Continue?')) return;
+          if (ghForm.querySelector('#gh-remember').checked && token) this.storage.set('githubToken', token);
+          const parsed = await this.storage.loadFromGitHub({ owner, repo, path, branch, token });
+          alert('Loaded data from GitHub');
+          if (window.app && typeof window.app.render === 'function') window.app.render();
+        } catch (err) { console.error(err); alert('Load from GitHub failed: ' + (err && err.message)); }
+      });
     }
 
     wrap.appendChild(overlay);
