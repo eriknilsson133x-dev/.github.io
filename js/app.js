@@ -119,20 +119,6 @@ class App {
         <label class="text-sm">Auto-sync after workout</label>
         <button id="autoSyncBtn" class="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700">Off</button>
       </div>
-      <div class="space-y-4">
-        <div class="border-t border-gray-600 pt-4 space-y-2">
-          <div class="flex items-center justify-between">
-            <div class="flex gap-3">
-              <button id="exportBackupBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Export Backup</button>
-              <button id="importBackupBtn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded">Import Backup</button>
-            </div>
-            <div class="flex justify-end gap-3">
-              <button id="saveAllGitHubBtn" class="px-4 py-2 bg-green-600 text-white rounded">Save All → GitHub</button>
-              <button id="loadAllGitHubBtn" class="px-4 py-2 bg-yellow-600 text-white rounded">Load All ← GitHub</button>
-            </div>
-          </div>
-        </div>
-      </div>
       <div class="flex justify-end gap-3 mt-6">
         <button id="closeOnlySettingsBtn" class="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500">Close</button>
       </div>
@@ -197,52 +183,7 @@ class App {
 
     // Cloud sync buttons removed — use GitHub backup form instead
 
-    // Export / Import backup handlers (moved from Log view)
-    const expBtn = modal.querySelector('#exportBackupBtn');
-    if (expBtn) expBtn.onclick = () => { try { this.logger.exportData(); } catch (err) { console.error(err); alert('Export failed'); } };
-    const impBtn = modal.querySelector('#importBackupBtn');
-    if (impBtn) impBtn.onclick = () => { try { this.logger.importData(); } catch (err) { console.error(err); alert('Import failed'); } };
-
-    // Save/Load all to GitHub (use stored repo/path/branch/token when available)
-    const saveAllBtn = modal.querySelector('#saveAllGitHubBtn');
-    const loadAllBtn = modal.querySelector('#loadAllGitHubBtn');
-    if (saveAllBtn) saveAllBtn.onclick = async () => {
-      try {
-        const storedRepo = this.storage.get('githubRepo') || '';
-        const repoVal = storedRepo || prompt('Enter repo (owner/repo)', 'owner/repo');
-        if (!repoVal) return;
-        const parts = repoVal.split('/');
-        if (parts.length < 2) return alert('Repo must be in owner/repo format');
-        const owner = parts[0];
-        const repo = parts.slice(1).join('/');
-        const path = this.storage.get('githubPath') || 'data/backup.json';
-        const branch = this.storage.get('githubBranch') || 'main';
-        const token = this.storage.get('githubToken') || undefined;
-        const message = this.storage.get('githubMessage') || 'crimpd backup from web';
-        if (!confirm(`Save all data to ${repoVal}/${path}?`)) return;
-        await this.storage.saveToGitHub({ owner, repo, path, branch, token, message });
-        alert('Saved backup to GitHub');
-      } catch (err) { console.error(err); alert('Save all failed: ' + (err && err.message)); }
-    };
-
-    if (loadAllBtn) loadAllBtn.onclick = async () => {
-      try {
-        const storedRepo = this.storage.get('githubRepo') || '';
-        const repoVal = storedRepo || prompt('Enter repo (owner/repo)', 'owner/repo');
-        if (!repoVal) return;
-        const parts = repoVal.split('/');
-        if (parts.length < 2) return alert('Repo must be in owner/repo format');
-        const owner = parts[0];
-        const repo = parts.slice(1).join('/');
-        const path = this.storage.get('githubPath') || 'data/backup.json';
-        const branch = this.storage.get('githubBranch') || 'main';
-        const token = this.storage.get('githubToken') || undefined;
-        if (!confirm('This will overwrite local data with the GitHub backup. Continue?')) return;
-        await this.storage.loadFromGitHub({ owner, repo, path, branch, token });
-        alert('Loaded backup from GitHub');
-        if (window.app && typeof window.app.render === 'function') window.app.render();
-      } catch (err) { console.error(err); alert('Load all failed: ' + (err && err.message)); }
-    };
+    // Export/Import and Save/Load All handlers removed
 
     // GitHub Save / Load — friendly inline form (insert reliably)
     {
