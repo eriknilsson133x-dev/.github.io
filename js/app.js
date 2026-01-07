@@ -195,7 +195,9 @@ class App {
         </div>
       `;
 
-      importExportRow.parentElement.insertBefore(ghForm, importExportRow.nextSibling);
+      const footer = modal.querySelector('.flex.justify-end.gap-3.mt-6');
+      if (footer) footer.parentElement.insertBefore(ghForm, footer);
+      else importExportRow.parentElement.insertBefore(ghForm, importExportRow.nextSibling);
 
       const ghSave = ghForm.querySelector('#gh-save');
       const ghLoad = ghForm.querySelector('#gh-load');
