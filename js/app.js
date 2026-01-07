@@ -74,6 +74,32 @@ class App {
 
   }
 
+  async quickSaveToGitHub() {
+    try {
+      const storedToken = this.storage.get('githubToken') || '';
+      const repo = prompt('Enter repo (owner/repo)', 'eriknilsson133x-dev/.github.io');
+      if (!repo) return;
+      const path = prompt('Enter file path (e.g. data/backup.json)', 'data/backup.json');
+      if (!path) return;
+      const branch = prompt('Enter branch', 'main') || 'main';
+      let token = storedToken;
+      if (!token) token = prompt('Enter personal access token (scopes: public_repo or repo). Leave empty for public repo read-only');
+      if (!token && !confirm('No token provided. Saving to a public repo without a token may fail. Continue?')) return;
+      const remember = token && confirm('Remember token in browser localStorage for future saves?');
+      if (remember) this.storage.set('githubToken', token);
+      const message = prompt('Commit message', 'crimpd backup from web') || 'crimpd backup from web';
+      const parts = repo.split('/');
+      if (parts.length < 2) return alert('Repo must be in owner/repo format');
+      const owner = parts[0];
+      const repoName = parts.slice(1).join('/');
+      await this.storage.saveToGitHub({ owner, repo: repoName, path, branch, token, message });
+      alert('Saved to GitHub');
+    } catch (err) {
+      console.error('quickSaveToGitHub failed', err);
+      alert('Save to GitHub failed: ' + (err && err.message));
+    }
+  }
+
   showGlobalSettings() {
     const wrap = document.createElement('div');
     wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
@@ -1127,6 +1153,7 @@ class App {
             <svg class="w-5 h-5 hidden dark:block"><use href="#icon-moon"></use></svg>
           </button>
           <button onclick="app.showGlobalSettings()" class="p-2 rounded bg-gray-800 hover:bg-gray-700" title="App Settings" aria-label="App Settings">⚙️</button>
+          <button onclick="app.quickSaveToGitHub()" class="p-2 rounded bg-gray-800 hover:bg-gray-700" title="Save to GitHub" aria-label="Save to GitHub">⬆️</button>
           ${speakerPlaceholder}
         </div>
       </nav>
