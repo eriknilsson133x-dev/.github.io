@@ -13,6 +13,53 @@ export class Logger {
     this.storage.set('log', log);
   }
 
+  editEntry(idx) {
+    const log = this.storage.get('log') || [];
+    const entry = log[idx];
+    if (!entry) return;
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    const entryDate = (entry.date && entry.date.slice && entry.date.slice(0,10)) ? entry.date.slice(0,10) : new Date().toISOString().slice(0,10);
+    modal.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full mx-4">
+        <h2 class="text-xl font-bold mb-4">Edit Log Entry</h2>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium mb-1">Date</label>
+            <input id="edit-log-date" type="date" class="w-full p-2 bg-white dark:bg-gray-700 rounded text-gray-900 dark:text-gray-100" value="${entryDate}">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Summary</label>
+            <input id="edit-log-summary" class="w-full p-2 bg-white dark:bg-gray-700 rounded text-gray-900 dark:text-gray-100" value="${(entry.summary||'').replace(/"/g,'&quot;')}">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Details (one per line)</label>
+            <textarea id="edit-log-details" class="w-full p-2 bg-white dark:bg-gray-700 rounded text-gray-900 dark:text-gray-100" rows="6">${(entry.details || []).join('\n')}</textarea>
+          </div>
+        </div>
+        <div class="flex justify-end items-center mt-6">
+          <button id="edit-cancel" class="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500 mr-2">Cancel</button>
+          <button id="edit-save" class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500">Save</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('#edit-cancel').onclick = () => modal.remove();
+    modal.querySelector('#edit-save').onclick = () => {
+      try {
+        const d = modal.querySelector('#edit-log-date').value;
+        const s = modal.querySelector('#edit-log-summary').value.trim();
+        const detailsRaw = modal.querySelector('#edit-log-details').value || '';
+        entry.date = d ? d : entry.date;
+        entry.summary = s;
+        entry.details = detailsRaw.split('\n').map(s => s.trim()).filter(Boolean);
+        this.storage.set('log', log);
+        modal.remove();
+        if (window.app && typeof window.app.render === 'function') window.app.render();
+      } catch (err) { console.error('Failed to save edited log entry', err); }
+    };
+  }
+
   deleteEntry(idx) {
     if (confirm('Delete this session?')) {
       const log = this.storage.get('log');
@@ -247,7 +294,10 @@ export class Logger {
                       return `
                           <div onclick="app.logger.toggleActive(${originalIdx})" class="bg-white dark:bg-gray-800 rounded-lg overflow-hidden p-4 flex items-start justify-between log-entry" style="cursor:pointer">
                             <div class="text-sm text-muted">${noteText}</div>
-                            ${this.activeIdx === originalIdx ? `<button onclick="app.logger.deleteEntry(${originalIdx}); event.stopPropagation();" class="text-red-500 hover:text-red-400 ml-4 px-3 py-2" style="min-height:48px;min-width:48px">🗑️</button>` : ''}
+                            ${this.activeIdx === originalIdx ? `<div style="display:flex;align-items:center">
+                                <button onclick="app.logger.editEntry(${originalIdx}); event.stopPropagation();" class="text-gray-400 hover:text-white ml-2 px-3 py-2" style="min-height:48px;min-width:48px">⚙️</button>
+                                <button onclick="app.logger.deleteEntry(${originalIdx}); event.stopPropagation();" class="text-red-500 hover:text-red-400 ml-2 px-3 py-2" style="min-height:48px;min-width:48px">🗑️</button>
+                              </div>` : ''}
                           </div>
                         `;
                     }
@@ -261,7 +311,10 @@ export class Logger {
                                 <div class="text-sm text-muted">${entry.summary}</div>
                                 ${entry.details && entry.details.length ? `<div class="text-xs text-muted mt-1">${entry.details.join(' · ')}</div>` : ''}
                             </div>
-                            ${this.activeIdx === originalIdx ? `<button onclick="app.logger.deleteEntry(${originalIdx}); event.stopPropagation();" class="text-red-500 hover:text-red-400 ml-4 px-3 py-2" style="min-height:48px;min-width:48px">🗑️</button>` : ''}
+                            ${this.activeIdx === originalIdx ? `<div style="display:flex;align-items:center">
+                                <button onclick="app.logger.editEntry(${originalIdx}); event.stopPropagation();" class="text-gray-400 hover:text-white ml-4 px-3 py-2" style="min-height:48px;min-width:48px">⚙️</button>
+                                <button onclick="app.logger.deleteEntry(${originalIdx}); event.stopPropagation();" class="text-red-500 hover:text-red-400 ml-4 px-3 py-2" style="min-height:48px;min-width:48px">🗑️</button>
+                              </div>` : ''}
                           </div>
                         <div id="accordion-${originalIdx}" class="accordion-content px-4">
                           <div class="pb-4 text-sm text-gray-600 dark:text-gray-300 space-y-1">

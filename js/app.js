@@ -1052,8 +1052,9 @@ class App {
       }
     }
 
+    const entryDate = (ts.origin && ts.origin.type === 'plan' && ts.origin.date) ? ts.origin.date : new Date().toISOString();
     const entry = {
-      date: new Date().toISOString(),
+      date: entryDate,
       workoutId: workout.id,
       workoutName: workout.name,
       bestValue,

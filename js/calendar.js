@@ -58,7 +58,7 @@ export class Calendar {
           <div class="flex items-center justify-between mb-4">
           <h1 class="text-2xl font-bold">${weekTitle}</h1>
           
-          <div class="flex gap-2">
+          <div class="flex items-center gap-2">
             <button onclick="window.app.prevWeekForCalendar()" class="text-sm px-2 py-1 rounded bg-gray-700 hover:bg-gray-600">
               <svg class="w-4 h-4"><use href="#icon-chevron-left"></use></svg>
             </button>
@@ -94,7 +94,7 @@ export class Calendar {
           <div class="flex items-center justify-between mb-4">
           <h1 class="text-2xl font-bold">${monthName}</h1>
           
-          <div class="flex gap-2">
+          <div class="flex items-center gap-2">
             <button onclick="window.app.prevMonthForCalendar()" class="text-sm px-2 py-1 rounded bg-gray-700 hover:bg-gray-600">
               <svg class="w-4 h-4"><use href="#icon-chevron-left"></use></svg>
             </button>
