@@ -173,8 +173,8 @@ input.bg-white, textarea.bg-white, .bg-white { background: var(--card-bg) !impor
 
 * { box-sizing: border-box; }
 
-/* Ensure touch targets meet accessibility: all buttons at least 48x48 */
-button { min-height: 48px; min-width: 48px; }
+/* Ensure touch targets meet accessibility: all buttons at least 48x48 and center contents */
+button { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; min-width: 48px; }
 
 .dark .text-gray-700 { color: var(--muted) !important; }
 .dark .shadow { box-shadow: none !important; }
@@ -232,8 +232,11 @@ html.theme-light .day-card .min-h-\[40px\] {
   box-sizing: border-box;
 }
 
-/* Ensure touch targets meet accessibility: all buttons at least 48x48 */
+/* Ensure touch targets meet accessibility: all buttons at least 48x48 and center contents */
 button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 48px;
   min-width: 48px;
 }
