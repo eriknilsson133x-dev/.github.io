@@ -61,7 +61,8 @@
       "0e4adb9e-37ef-4697-a180-0d93927f7db6"
     ],
     "2026-01-10": [
-      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "48fb9735-f5cb-42c7-a760-9252acffd091"
     ]
   },
   "planNotes": {
@@ -158,10 +159,39 @@
         "Set 1: 30 s",
         "Set 2: 30 s"
       ]
+    },
+    {
+      "date": "2026-01-10",
+      "workoutId": "48fb9735-f5cb-42c7-a760-9252acffd091",
+      "workoutName": "Maxhangs",
+      "bestValue": 25,
+      "isPR": false,
+      "summary": "6 sets: 10 s  10 mm  25 kg",
+      "details": [
+        "Set 1: 10 s  10 mm  25 kg",
+        "Set 2: 10 s  10 mm  25 kg",
+        "Set 3: 10 s  10 mm  25 kg",
+        "Set 4: 10 s  10 mm  25 kg",
+        "Set 5: 10 s  10 mm  25 kg",
+        "Set 6: 10 s  10 mm  25 kg",
+        "Set 7: 10 s  10 mm  25 kg",
+        "Set 8: 10 s  10 mm  25 kg",
+        "Set 9: 10 s  10 mm  25 kg",
+        "Set 10: 10 s  10 mm  25 kg",
+        "Set 11: 10 s  10 mm  25 kg",
+        "Set 12: 10 s  10 mm  25 kg",
+        "Set 13: 10 s  10 mm  25 kg",
+        "Set 14: 10 s  10 mm  25 kg",
+        "Set 15: 10 s  10 mm  25 kg",
+        "Set 16: 10 s  10 mm  25 kg",
+        "Set 17: 10 s  10 mm  25 kg",
+        "Set 18: 10 s  10 mm  25 kg"
+      ]
     }
   ],
   "prs": {
-    "809403ab-6e27-4658-ae39-bf8c7985c277": 36
+    "809403ab-6e27-4658-ae39-bf8c7985c277": 36,
+    "48fb9735-f5cb-42c7-a760-9252acffd091": 25
   },
   "userWorkouts": [
     {
@@ -230,7 +260,8 @@
       "repeaterRest": null,
       "repeaterWork": null,
       "leftRightMode": false,
-      "repeaterCount": null
+      "repeaterCount": null,
+      "depth": 10
     }
   ],
   "progressCategories": [
