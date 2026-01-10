@@ -639,6 +639,9 @@ class App {
       rest: parseInt(formData.get('rest')),
       // finger block mode
       leftRightMode: formData.get('tool') === 'Finger block' ? formData.get('leftRightMode') === 'on' : false
+      ,
+      // depth for hangboard / finger workouts (mm)
+      depth: (formData.get('depth') && formData.get('depth').trim() !== '') ? parseInt(formData.get('depth'), 10) : null
     };
 
     const error = validateWorkout(workout);
@@ -1454,6 +1457,13 @@ class App {
                   <option value="kg" ${(ed && ed.weightUnit) === 'kg' ? 'selected' : ''}>kg</option>
                   <option value="lbs" ${(ed && ed.weightUnit) === 'lbs' ? 'selected' : ''}>lbs</option>
                 </select>
+              </div>
+            </div>
+            <div id="depth-inputs" style="display:${(ed && (ed.tool==='Finger block' || ed.tool==='Hangboard')) ? 'block' : 'none'}" class="space-y-3 ml-4">
+              <div>
+                <label class="block mb-2 font-medium">Depth (mm)</label>
+                <input type="number" name="depth" value="${(ed && (typeof ed.depth !== 'undefined' && ed.depth !== null)) ? ed.depth : ''}" step="1" min="0"
+                       class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px">
               </div>
             </div>
           </div>

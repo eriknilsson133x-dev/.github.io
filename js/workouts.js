@@ -89,6 +89,11 @@ export function setupFormListeners() {
         e.stopPropagation();
         const tool = e.target.value;
         document.getElementById('fingerBlockMode').style.display = (tool === 'Finger block') ? 'block' : 'none';
+        // show depth input for Hangboard or Finger block
+        try {
+          const depthWrap = document.getElementById('depth-inputs');
+          if (depthWrap) depthWrap.style.display = (tool === 'Finger block' || tool === 'Hangboard') ? 'block' : 'none';
+        } catch (err) { /* ignore */ }
       });
     }
   });
