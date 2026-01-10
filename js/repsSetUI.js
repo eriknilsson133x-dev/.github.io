@@ -4,6 +4,7 @@
 
 export function renderRepsUI(ts, app) {
   const w = ts.workout || {};
+  const isFingerBoard = ((w.tool || '').toLowerCase().includes('finger') || (w.name || '').toLowerCase().includes('finger') || (w.tool || '').toLowerCase().includes('hang') || (w.name || '').toLowerCase().includes('hang'));
   const total = Math.max(1, ts.totalSets || 1);
   if (!Array.isArray(ts.inputs) || ts.inputs.length !== total) {
     ts.inputs = new Array(total).fill(w.reps || 0);
@@ -27,6 +28,16 @@ export function renderRepsUI(ts, app) {
             <div class="flex items-center gap-2">
               <input id="repsWeight" type="number" step="0.5" min="0" value="${(typeof ts.presetWeight !== 'undefined' && ts.presetWeight !== null) ? ts.presetWeight : ((typeof w.weight !== 'undefined' && w.weight !== null) ? w.weight : 0)}" class="bg-white dark:bg-gray-700 p-2 rounded w-20 text-lg text-gray-900 dark:text-gray-100" onchange="app.repsUI_updateWeight(this.value)">
               <span class="text-sm text-gray-700 dark:text-gray-300">${w.weightUnit || 'kg'}</span>
+            </div>
+          </div>
+      ` : ''}
+
+      ${isFingerBoard ? `
+        <div class="mb-4">
+            <label class="block text-sm text-gray-700 dark:text-gray-300 mb-2">Depth (mm)</label>
+            <div class="flex items-center gap-2">
+              <input id="repsDepth" type="number" step="1" min="0" value="${(typeof ts.presetDepth !== 'undefined' && ts.presetDepth !== null) ? ts.presetDepth : ((typeof w.depth !== 'undefined' && w.depth !== null) ? w.depth : '')}" class="bg-white dark:bg-gray-700 p-2 rounded w-24 text-lg text-gray-900 dark:text-gray-100" onchange="app.repsUI_updateDepth(this.value)">
+              <span class="text-sm text-gray-700 dark:text-gray-300">mm</span>
             </div>
           </div>
       ` : ''}

@@ -663,6 +663,7 @@ class App {
       inputs: [],
       workout,
       originalWeight: workout.weight,  // track original for saving changes
+      originalDepth: workout.depth,
       origin: date ? { type: 'plan', date } : null
     };
     this.render();
@@ -690,6 +691,23 @@ class App {
       }
     } else {
       ts.presetWeight = null;
+    }
+
+    // depth for fingerboard/hang workouts
+    const isFinger = ((w.tool || '').toLowerCase().includes('finger') || (w.name || '').toLowerCase().includes('finger') || (w.tool || '').toLowerCase().includes('hang') || (w.name || '').toLowerCase().includes('hang'));
+    if (isFinger) {
+      const pd = document.getElementById('presetDepth');
+      if (pd && String(pd.value).trim() !== '') {
+        ts.presetDepth = parseInt(pd.value, 10) || (w.depth || 0);
+      } else {
+        ts.presetDepth = (typeof w.depth !== 'undefined' && w.depth !== null) ? w.depth : null;
+      }
+      if (ts.presetDepth !== (w.depth || null)) {
+        w.depth = ts.presetDepth;
+        try { this.storage.saveUserWorkout(w); } catch (e) { /* ignore */ }
+      }
+    } else {
+      ts.presetDepth = null;
     }
 
     // jump straight into first work period or special UI
@@ -971,6 +989,14 @@ class App {
     this.render();
   }
 
+  // New: update depth (mm) during reps workout
+  repsUI_updateDepth(value) {
+    const ts = this.state.timerState;
+    if (!ts) return;
+    ts.presetDepth = (value === '' || value === null) ? null : parseInt(value, 10) || 0;
+    this.render();
+  }
+
   skipTimer() {
     clearInterval(this.state.timerState.timer);
     this.state.timerState.phase = 'work';
@@ -1080,6 +1106,11 @@ class App {
         workout.weight = ts.presetWeight;
         this.storage.saveUserWorkout(workout);
       }
+      // save updated depth back to workout template if changed
+      if (typeof ts.presetDepth !== 'undefined' && ts.presetDepth !== null && ts.presetDepth !== ts.originalDepth) {
+        workout.depth = ts.presetDepth;
+        this.storage.saveUserWorkout(workout);
+      }
       this.state.tab = 'log';
       try { this.releaseWakeLock(); } catch (e) {}
       this.render();
@@ -1103,6 +1134,11 @@ class App {
         // save updated weight back to workout template if changed
         if (workout.hasWeight && ts.presetWeight !== ts.originalWeight) {
           workout.weight = ts.presetWeight;
+          this.storage.saveUserWorkout(workout);
+        }
+        // save updated depth back to workout template if changed
+        if (typeof ts.presetDepth !== 'undefined' && ts.presetDepth !== null && ts.presetDepth !== ts.originalDepth) {
+          workout.depth = ts.presetDepth;
           this.storage.saveUserWorkout(workout);
         }
         this.state.tab = 'log';
@@ -1146,6 +1182,12 @@ class App {
               <input id="presetWeight" type="number" step="0.5" min="0" class="bg-gray-700 p-3 rounded w-full" placeholder="0" value="${w.weight || ''}">
               <div class="text-sm text-gray-300 px-3">${w.weightUnit || 'kg'}</div>
             </div>` : ''}
+          ${((w.tool || '').toLowerCase().includes('finger') || (w.name || '').toLowerCase().includes('finger') || (w.tool || '').toLowerCase().includes('hang') || (w.name || '').toLowerCase().includes('hang')) ? `
+            <label class="block mb-2">Depth (mm)</label>
+            <div class="flex gap-2 items-center mb-4">
+              <input id="presetDepth" type="number" step="1" min="0" class="bg-gray-700 p-3 rounded w-full" placeholder="e.g. 20" value="${w.depth || ''}">
+              <div class="text-sm text-gray-300 px-3">mm</div>
+            </div>` : ''}
           <div class="flex gap-3">
             <button onclick="app.startFirstSet()" class="flex-1 bg-blue-600 py-3 rounded-lg text-lg hover:bg-blue-500">Start</button>
             <button onclick="app.cancelWorkout()" class="flex-1 bg-gray-700 py-3 rounded-lg text-lg hover:bg-gray-600">Cancel</button>
@@ -1179,6 +1221,7 @@ class App {
             <div class="text-2xl">${ts.currentSet + 1} of ${ts.totalSets}</div>
           </div>
           ${w.hasWeight ? `<div class="mb-4">Weight: ${ (ts.presetWeight !== undefined && ts.presetWeight !== null) ? ts.presetWeight : ((w.weight !== undefined && w.weight !== null) ? w.weight : 0) } ${w.weightUnit || 'kg'}</div>` : ''}
+          ${((w.tool || '').toLowerCase().includes('finger') || (w.name || '').toLowerCase().includes('finger') || (w.tool || '').toLowerCase().includes('hang') || (w.name || '').toLowerCase().includes('hang')) ? `<div class="mb-4">Depth: ${ (ts.presetDepth !== undefined && ts.presetDepth !== null) ? ts.presetDepth : ((w.depth !== undefined && w.depth !== null) ? w.depth : '') } mm</div>` : ''}
           ${(w.type === 'repeaters') ? `
             <div class="mb-4 text-center">
               <div class="text-sm text-gray-400 mb-2">Cycle</div>
