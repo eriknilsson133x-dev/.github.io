@@ -287,6 +287,23 @@ export class Logger {
                 <div class="space-y-3">
                   ${items.map(item => {
                     const entry = item.entry;
+                    // Format compact units for workout entries (e.g. "5s 10mm 10kg")
+                    let displaySummary = entry.summary || '';
+                    let displayDetails = (entry.details || []).slice();
+                    if (entry.workoutId) {
+                      try {
+                        const fmt = s => (s || '')
+                          .replace(/\b(\d+)\s*s\b/g, '$1s')
+                          .replace(/\b(\d+)\s*mm\b/g, '$1mm')
+                          .replace(/\b(\d+)\s*kg\b/g, '$1kg')
+                          .replace(/\b(\d+)\s*lbs\b/g, '$1lbs')
+                          .replace(/\s*@\s*/g, ' ')
+                          .replace(/\s+/g, ' ')
+                          .trim();
+                        displaySummary = fmt(displaySummary);
+                        displayDetails = displayDetails.map(d => fmt(d));
+                      } catch (e) { /* ignore formatting errors */ }
+                    }
                     const originalIdx = item.originalIdx;
                     if (!entry.workoutId) {
                       // note entry: show note text directly (no accordion, no 'Note' title)
@@ -308,8 +325,8 @@ export class Logger {
                                 <div class="font-semibold">
                                   ${entry.workoutName} ${entry.isPR ? ' 🏆' : ''}
                                 </div>
-                                <div class="text-sm text-muted">${entry.summary}</div>
-                                ${entry.details && entry.details.length ? `<div class="text-xs text-muted mt-1">${entry.details.join(' · ')}</div>` : ''}
+                                <div class="text-sm text-muted">${displaySummary}</div>
+                                ${displayDetails && displayDetails.length ? `<div class="text-xs text-muted mt-1">${displayDetails.join(' · ')}</div>` : ''}
                             </div>
                             ${this.activeIdx === originalIdx ? `<div style="display:flex;align-items:center">
                                 <button onclick="app.logger.editEntry(${originalIdx}); event.stopPropagation();" class="text-gray-400 hover:text-white ml-4 px-3 py-2" style="min-height:48px;min-width:48px">⚙️</button>
