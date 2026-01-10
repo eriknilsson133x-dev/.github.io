@@ -640,20 +640,33 @@ export class Calendar {
     if (idx === -1) this.completed[date].push(id);
     else this.completed[date].splice(idx, 1);
     this.storage.set('planCompleted', this.completed);
-    // If an activity was just marked completed, also add it to the session log
+    // If an activity was just marked completed, prompt for an optional note
     try {
       if (idx === -1 && window.app && window.app.logger && typeof window.app.logger.addEntry === 'function') {
         const activity = id.startsWith('activity:') ? id.split(':')[1] : id;
-        const entry = {
-          date: new Date(date).toISOString(),
-          workoutId: null,
-          workoutName: activity.charAt(0).toUpperCase() + activity.slice(1),
-          bestValue: 0,
-          isPR: false,
-          summary: activity.charAt(0).toUpperCase() + activity.slice(1),
-          details: []
+        const addEntry = (note) => {
+          const title = activity.charAt(0).toUpperCase() + activity.slice(1);
+          const entry = {
+            date: new Date(date).toISOString(),
+            workoutId: null,
+            workoutName: title,
+            bestValue: 0,
+            isPR: false,
+            summary: note ? `${title} — ${note}` : title,
+            details: []
+          };
+          try { window.app.logger.addEntry(entry); } catch (e) { console.error('Failed to add log entry for activity', e); }
         };
-        try { window.app.logger.addEntry(entry); } catch (e) { console.error('Failed to add log entry for activity', e); }
+
+        if (window.app && typeof window.app.showPostWorkoutNoteModal === 'function') {
+          try {
+            window.app.showPostWorkoutNoteModal((note) => addEntry(note));
+          } catch (e) {
+            addEntry('');
+          }
+        } else {
+          addEntry('');
+        }
       }
     } catch (e) { /* ignore */ }
 
