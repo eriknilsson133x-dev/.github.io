@@ -36,7 +36,7 @@ function renderVolumeChart(log, storage) {
   });
 
   new Chart(ctx, {
-    type: 'pie',
+    type: 'doughnut',
     data: {
       labels: ['Finger Training', 'Pull-ups', 'Board Climbing', 'Climbing'],
       datasets: [{
@@ -45,6 +45,7 @@ function renderVolumeChart(log, storage) {
       }]
     },
     options: {
+      cutout: '55%',
       responsive: true,
       plugins: {
         legend: { labels: { color: '#f3f4f6' } }
