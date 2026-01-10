@@ -148,7 +148,7 @@
       ]
     },
     {
-      "date": "2026-01-10",
+      "date": "2026-01-10T13:25:26.628Z",
       "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
       "workoutName": "Science fingerboard",
       "bestValue": 30,
@@ -156,8 +156,7 @@
       "summary": "2 sets × 30 s",
       "details": [
         "Set 1: 30 s",
-        "Set 2: 30 s",
-        "Set 3: 30 s"
+        "Set 2: 30 s"
       ]
     }
   ],
