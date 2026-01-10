@@ -1048,36 +1048,42 @@ class App {
     }
 
     // Build summary and per-set details. If workout has weight and also a duration/reps
-    // include both in the display (e.g. "2 sets: 5s @ 10 kg" and "Set 1: 5s @ 10 kg").
+    // include both in the display (e.g. "2 sets: 5s 20 mm @ 10 kg" and "Set 1: 5s 20 mm @ 10 kg").
     let summary;
     let details = [];
 
     const displayUnit = workout.hasWeight ? (weightUnit) : timeUnit;
+    const depthVal = (ts && typeof ts.presetDepth !== 'undefined' && ts.presetDepth !== null)
+      ? ts.presetDepth
+      : (typeof workout.depth !== 'undefined' && workout.depth !== null ? workout.depth : null);
 
     if (workout.hasWeight && (workout.type === 'duration' || workout.type === 'both')) {
       const perSet = (ts.inputs && ts.inputs.length > 0) ? ts.inputs[0] : (workout.duration || 0);
-      summary = `${ts.totalSets} sets: ${perSet} ${timeUnit} @ ${bestValue} ${weightUnit}${isPR ? ' – NEW PR' : ''}`;
+      const depthPart = depthVal ? ` ${depthVal} mm` : '';
+      summary = `${ts.totalSets} sets: ${perSet} ${timeUnit}${depthPart} @ ${bestValue} ${weightUnit}${isPR ? ' – NEW PR' : ''}`;
       if (ts.inputs && ts.inputs.length > 0) {
-        details = ts.inputs.map((v, i) => `Set ${i+1}: ${v} ${timeUnit} @ ${bestValue} ${weightUnit}`);
+        details = ts.inputs.map((v, i) => `Set ${i+1}: ${v} ${timeUnit}${depthPart} @ ${bestValue} ${weightUnit}`);
       } else {
-        details = Array(ts.totalSets).fill(`Set: ${workout.duration || 0} ${timeUnit} @ ${bestValue} ${weightUnit}`);
+        details = Array(ts.totalSets).fill(`Set: ${workout.duration || 0} ${timeUnit}${depthPart} @ ${bestValue} ${weightUnit}`);
       }
     } else if (workout.hasWeight && (workout.type === 'reps')) {
       // reps with weight
       const perSet = (ts.inputs && ts.inputs.length > 0) ? ts.inputs[0] : 0;
-      summary = `${ts.totalSets} sets: ${perSet} reps @ ${bestValue} ${weightUnit}${isPR ? ' – NEW PR' : ''}`;
+      const depthPart = depthVal ? ` ${depthVal} mm` : '';
+      summary = `${ts.totalSets} sets: ${perSet} reps${depthPart} @ ${bestValue} ${weightUnit}${isPR ? ' – NEW PR' : ''}`;
       if (ts.inputs && ts.inputs.length > 0) {
-        details = ts.inputs.map((v, i) => `Set ${i+1}: ${v} reps @ ${bestValue} ${weightUnit}`);
+        details = ts.inputs.map((v, i) => `Set ${i+1}: ${v} reps${depthPart} @ ${bestValue} ${weightUnit}`);
       } else {
-        details = Array(ts.totalSets).fill(`Set: ${perSet} reps @ ${bestValue} ${weightUnit}`);
+        details = Array(ts.totalSets).fill(`Set: ${perSet} reps${depthPart} @ ${bestValue} ${weightUnit}`);
       }
     } else {
       // non-weight workouts (duration or reps)
-      summary = `${ts.totalSets} sets × ${bestValue} ${unit}`;
+      const depthPart = depthVal ? ` ${depthVal} mm` : '';
+      summary = `${ts.totalSets} sets × ${bestValue} ${unit}${depthPart}`;
       if (ts.inputs && ts.inputs.length > 0) {
-        details = ts.inputs.map((v, i) => `Set ${i+1}: ${v} ${unit}`);
+        details = ts.inputs.map((v, i) => `Set ${i+1}: ${v} ${unit}${depthPart}`);
       } else {
-        details = Array(ts.totalSets).fill(`Set: ${bestValue} ${unit}`);
+        details = Array(ts.totalSets).fill(`Set: ${bestValue} ${unit}${depthPart}`);
       }
     }
 
