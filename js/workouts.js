@@ -95,6 +95,12 @@ export function setupFormListeners() {
           if (depthWrap) depthWrap.style.display = (tool === 'Finger block' || tool === 'Hangboard') ? 'block' : 'none';
         } catch (err) { /* ignore */ }
       });
+      // initialize depth input visibility based on current selection
+      try {
+        const current = toolSelect.value;
+        const depthWrapInit = document.getElementById('depth-inputs');
+        if (depthWrapInit) depthWrapInit.style.display = (current === 'Finger block' || current === 'Hangboard') ? 'block' : 'none';
+      } catch (err) { /* ignore */ }
     }
   });
 }
