@@ -640,6 +640,23 @@ export class Calendar {
     if (idx === -1) this.completed[date].push(id);
     else this.completed[date].splice(idx, 1);
     this.storage.set('planCompleted', this.completed);
+    // If an activity was just marked completed, also add it to the session log
+    try {
+      if (idx === -1 && window.app && window.app.logger && typeof window.app.logger.addEntry === 'function') {
+        const activity = id.startsWith('activity:') ? id.split(':')[1] : id;
+        const entry = {
+          date: new Date(date).toISOString(),
+          workoutId: null,
+          workoutName: activity.charAt(0).toUpperCase() + activity.slice(1),
+          bestValue: 0,
+          isPR: false,
+          summary: activity.charAt(0).toUpperCase() + activity.slice(1),
+          details: []
+        };
+        try { window.app.logger.addEntry(entry); } catch (e) { console.error('Failed to add log entry for activity', e); }
+      }
+    } catch (e) { /* ignore */ }
+
     if (window.app && typeof window.app.render === 'function') window.app.render();
   }
 
