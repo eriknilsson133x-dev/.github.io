@@ -287,19 +287,27 @@ export class Logger {
                 <div class="space-y-3">
                   ${items.map(item => {
                     const entry = item.entry;
-                    // Format compact units for workout entries (e.g. "5s 10mm 10kg")
+                    // Normalize unit formatting for workout entries to "5 s  5 mm  5 kg"
                     let displaySummary = entry.summary || '';
                     let displayDetails = (entry.details || []).slice();
                     if (entry.workoutId) {
                       try {
-                        const fmt = s => (s || '')
-                          .replace(/\b(\d+)\s*s\b/g, '$1s')
-                          .replace(/\b(\d+)\s*mm\b/g, '$1mm')
-                          .replace(/\b(\d+)\s*kg\b/g, '$1kg')
-                          .replace(/\b(\d+)\s*lbs\b/g, '$1lbs')
-                          .replace(/\s*@\s*/g, ' ')
-                          .replace(/\s+/g, ' ')
-                          .trim();
+                        const fmt = s => {
+                          if (!s) return '';
+                          let t = s;
+                          // ensure single space between number and unit
+                          t = t.replace(/\b(\d+)\s*s\b/gi, '$1 s');
+                          t = t.replace(/\b(\d+)\s*mm\b/gi, '$1 mm');
+                          t = t.replace(/\b(\d+)\s*kg\b/gi, '$1 kg');
+                          t = t.replace(/\b(\d+)\s*lbs\b/gi, '$1 lbs');
+                          // replace @ with space
+                          t = t.replace(/\s*@\s*/g, ' ');
+                          // collapse multiple spaces to single (temporary)
+                          t = t.replace(/\s+/g, ' ').trim();
+                          // insert double space between unit and next numeric group
+                          t = t.replace(/(s|mm|kg|lbs) (\d+)/gi, '$1  $2');
+                          return t;
+                        };
                         displaySummary = fmt(displaySummary);
                         displayDetails = displayDetails.map(d => fmt(d));
                       } catch (e) { /* ignore formatting errors */ }
