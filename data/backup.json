@@ -6,6 +6,9 @@
     "2026-01-04": [
       "97a862cc-ced3-43b1-a3f3-674a0a9d437e",
       "48fb9735-f5cb-42c7-a760-9252acffd091"
+    ],
+    "2026-01-11": [
+      "activity:climbing"
     ]
   },
   "planRecurring": {
@@ -63,12 +66,35 @@
     "2026-01-10": [
       "0e4adb9e-37ef-4697-a180-0d93927f7db6",
       "48fb9735-f5cb-42c7-a760-9252acffd091"
+    ],
+    "2026-01-11": [
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "activity:climbing"
+    ],
+    "2026-01-12": [
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
+    ],
+    "2026-01-13": [
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "activity:board climbing"
+    ],
+    "2026-01-15": [
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "activity:climbing"
+    ],
+    "2026-01-16": [
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
+    ],
+    "2026-01-17": [
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
     ]
   },
   "planNotes": {
     "2026-01-04": "Today was decent big boi MEEOW    aaa",
     "2026-01-06": "Session at klätterlabbet, väldigt jävla smutsigt, hittade knappt greppen. Klättrade på världens tredje smutsigaste moonboard enligt Alex handhold",
-    "2026-01-08": "Session at backaboulder, did some 6a-6b tricky slabs, finished off all 6b+ BM on 2024"
+    "2026-01-08": "Session at backaboulder, did some 6a-6b tricky slabs, finished off all 6b+ BM on 2024",
+    "2026-01-11": "Session with fuad, barely did any climbs, or so it felt like at least, but it was fun",
+    "2026-01-15": "Session with Jan hendrik at luchthaven, decent gym, a lot of stairs. \nFlashed a 7a classic on 30deg tension board\nTension board is quite fun"
   },
   "activities": [
     "stretching",
@@ -166,26 +192,131 @@
       "workoutName": "Maxhangs",
       "bestValue": 25,
       "isPR": false,
-      "summary": "6 sets: 10 s  10 mm  25 kg",
+      "summary": "6 sets: 5 s  10 mm",
       "details": [
-        "Set 1: 10 s  10 mm  25 kg",
-        "Set 2: 10 s  10 mm  25 kg",
-        "Set 3: 10 s  10 mm  25 kg",
-        "Set 4: 10 s  10 mm  25 kg",
-        "Set 5: 10 s  10 mm  25 kg",
-        "Set 6: 10 s  10 mm  25 kg",
-        "Set 7: 10 s  10 mm  25 kg",
-        "Set 8: 10 s  10 mm  25 kg",
-        "Set 9: 10 s  10 mm  25 kg",
-        "Set 10: 10 s  10 mm  25 kg",
-        "Set 11: 10 s  10 mm  25 kg",
-        "Set 12: 10 s  10 mm  25 kg",
-        "Set 13: 10 s  10 mm  25 kg",
-        "Set 14: 10 s  10 mm  25 kg",
-        "Set 15: 10 s  10 mm  25 kg",
-        "Set 16: 10 s  10 mm  25 kg",
-        "Set 17: 10 s  10 mm  25 kg",
-        "Set 18: 10 s  10 mm  25 kg"
+        "Set 1: 5 s  10 mm",
+        "Set 2: 5 s  10 mm",
+        "Set 3: 5 s  10 mm",
+        "Set 4: 5 s  10 mm",
+        "Set 5: 5 s  10 mm",
+        "Set 6: 5 s  10 mm"
+      ]
+    },
+    {
+      "date": "2026-01-11",
+      "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "workoutName": "Science fingerboard",
+      "bestValue": 30,
+      "isPR": false,
+      "summary": "2 sets × 30 s  20 mm",
+      "details": [
+        "Set 1: 30 s  20 mm",
+        "Set 2: 30 s  20 mm"
+      ]
+    },
+    {
+      "date": "2026-01-11T00:00:00.000Z",
+      "workoutId": null,
+      "workoutName": "Climbing",
+      "bestValue": 0,
+      "isPR": false,
+      "summary": "Climbing",
+      "details": []
+    },
+    {
+      "date": "2026-01-11T00:00:00.000Z",
+      "workoutId": null,
+      "workoutName": "",
+      "bestValue": 0,
+      "isPR": false,
+      "summary": "Session with fuad, barely did any climbs, or so it felt like at least, but it was fun",
+      "details": []
+    },
+    {
+      "date": "2026-01-12",
+      "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "workoutName": "Science fingerboard",
+      "bestValue": 30,
+      "isPR": false,
+      "summary": "2 sets × 30 s  20 mm",
+      "details": [
+        "Set 1: 30 s  20 mm",
+        "Set 2: 30 s  20 mm"
+      ]
+    },
+    {
+      "date": "2026-01-13",
+      "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "workoutName": "Science fingerboard",
+      "bestValue": 30,
+      "isPR": false,
+      "summary": "2 sets × 30 s  20 mm",
+      "details": [
+        "Set 1: 30 s  20 mm",
+        "Set 2: 30 s  20 mm"
+      ]
+    },
+    {
+      "date": "2026-01-13T00:00:00.000Z",
+      "workoutId": null,
+      "workoutName": "Board climbing",
+      "bestValue": 0,
+      "isPR": false,
+      "summary": "Board climbing — 2 6C both flash\n2 6C+",
+      "details": []
+    },
+    {
+      "date": "2026-01-15",
+      "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "workoutName": "Science fingerboard",
+      "bestValue": 30,
+      "isPR": false,
+      "summary": "2 sets × 30 s  20 mm",
+      "details": [
+        "Set 1: 30 s  20 mm",
+        "Set 2: 30 s  20 mm"
+      ]
+    },
+    {
+      "date": "2026-01-15T00:00:00.000Z",
+      "workoutId": null,
+      "workoutName": "Climbing",
+      "bestValue": 0,
+      "isPR": false,
+      "summary": "Climbing",
+      "details": []
+    },
+    {
+      "date": "2026-01-15T00:00:00.000Z",
+      "workoutId": null,
+      "workoutName": "",
+      "bestValue": 0,
+      "isPR": false,
+      "summary": "Session with Jan hendrik at luchthaven, decent gym, a lot of stairs. \nFlashed a 7a classic on 30deg tension board\nTension board is quite fun",
+      "details": []
+    },
+    {
+      "date": "2026-01-16",
+      "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "workoutName": "Science fingerboard",
+      "bestValue": 30,
+      "isPR": false,
+      "summary": "2 sets × 30 s  20 mm",
+      "details": [
+        "Set 1: 30 s  20 mm",
+        "Set 2: 30 s  20 mm"
+      ]
+    },
+    {
+      "date": "2026-01-17",
+      "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "workoutName": "Science fingerboard",
+      "bestValue": 30,
+      "isPR": false,
+      "summary": "2 sets × 30 s  20 mm",
+      "details": [
+        "Set 1: 30 s  20 mm",
+        "Set 2: 30 s  20 mm"
       ]
     }
   ],
@@ -226,7 +357,8 @@
       "repeaterRest": null,
       "repeaterWork": null,
       "leftRightMode": false,
-      "repeaterCount": null
+      "repeaterCount": null,
+      "depth": 20
     },
     {
       "id": "809403ab-6e27-4658-ae39-bf8c7985c277",
