@@ -481,7 +481,6 @@ export class Calendar {
             <div class="mt-4 pt-4 border-t border-gray-600">
               <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm font-semibold">Activities</h3>
-                <button onclick="window.app.showActivitySettingsForCalendar()" class="text-gray-400 hover:text-white text-sm">⚙️</button>
               </div>
               ${activities.map(activity => `
                  <div draggable="true" ondragstart="window.app.dragStartActivityForCalendar(event,'${activity}')" ondragend="window.app.dragEndForCalendar(event)"
