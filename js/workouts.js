@@ -68,27 +68,25 @@ export function setupFormListeners() {
           if (toolWrap) toolWrap.style.display = checked ? 'none' : '';
         } catch (e) { /* ignore */ }
 
-        // hide type radio wrapper (find the outer div that contains the label + radio group)
+        // hide the entire Type block (label + radios). Find the label that says 'Type' and hide its parent wrapper
         try {
-          const typeEl = form.querySelector('input[name="type"]');
-          let typeWrap = null;
-          if (typeEl) {
-            // walk up until we find an ancestor that contains the radio group and a label
-            let ancestor = typeEl.closest('div');
-            while (ancestor && ancestor !== form) {
-              if (ancestor.querySelectorAll && ancestor.querySelectorAll('input[name="type"]').length > 0 && ancestor.querySelector('label')) {
-                typeWrap = ancestor;
-                break;
+          const labels = Array.from(form.querySelectorAll('label'));
+          let typeLabel = labels.find(l => (l.textContent || '').toLowerCase().trim().startsWith('type')) || null;
+          if (typeLabel) {
+            const typeBlock = typeLabel.closest('div');
+            if (typeBlock) typeBlock.style.display = checked ? 'none' : '';
+            // also hide the following sibling that contains the radio list (in case the markup nests differently)
+            try {
+              let sibling = typeBlock.nextElementSibling;
+              if (!sibling && typeBlock.querySelectorAll('input[name="type"]').length === 0) {
+                // look for descendant radio container
+                const radios = typeBlock.querySelector('div');
+                if (radios) radios.style.display = checked ? 'none' : '';
+              } else if (sibling) {
+                sibling.style.display = checked ? 'none' : '';
               }
-              ancestor = ancestor.parentElement;
-            }
-            // fallback: use two levels up
-            if (!typeWrap) {
-              const first = typeEl.closest('div');
-              typeWrap = first && first.parentElement ? first.parentElement : first;
-            }
+            } catch (e) { /* ignore */ }
           }
-          if (typeWrap) typeWrap.style.display = checked ? 'none' : '';
         } catch (e) { /* ignore */ }
 
         // hide sets wrapper
