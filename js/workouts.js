@@ -47,6 +47,25 @@ export function setupFormListeners() {
 
     form.addEventListener('submit', e => e.preventDefault());
 
+    // toggle form fields when `isActivity` is checked
+    const isActivityCb = form.querySelector('input[name="isActivity"]');
+    if (isActivityCb) {
+      const toggle = () => {
+        const checked = isActivityCb.checked;
+        // hide/show fields that are irrelevant for activities
+        ['tool','fingerBlockMode','type','sets','duration-input','reps-input','repeaters-input','weight-inputs','depth-inputs','rest-input']
+          .forEach(id => {
+            try {
+              const el = document.getElementById(id);
+              if (el) el.style.display = checked ? 'none' : '';
+            } catch (e) { /* ignore */ }
+          });
+      };
+      isActivityCb.addEventListener('change', toggle);
+      // initialize
+      try { toggle(); } catch (e) { /* ignore */ }
+    }
+
     form.querySelectorAll('input[name="type"]').forEach(radio => {
       radio.addEventListener('change', e => {
         e.stopPropagation();

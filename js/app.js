@@ -666,8 +666,26 @@ class App {
   saveWorkout(event) {
     event.preventDefault();
     const formData = new FormData(event.target);
+    const isActivity = formData.get('isActivity') === 'on';
+    if (isActivity) {
+      const name = (formData.get('name') || '').trim();
+      if (!name) { showToast('Name required'); return; }
+      try {
+        // if editing an existing activity, remove old and add new
+        if (this.state.editingWorkout && this.state.editingWorkout.isActivity) {
+          try { this.storage.removeActivity(this.state.editingWorkout.name); } catch (e) {}
+        }
+        this.storage.addActivity(name.toLowerCase());
+        showToast(this.state.editingWorkout ? 'Activity updated' : 'Activity created');
+        this.state.showWorkoutForm = false;
+        this.state.editingWorkout = null;
+        this.render();
+      } catch (e) { console.error('Failed to save activity', e); showToast('Save failed'); }
+      return;
+    }
     const workout = {
       id: (this.state.editingWorkout && this.state.editingWorkout.id) || generateId(),
+      isActivity: false,
       name: formData.get('name'),
       tool: formData.get('tool'),
       sets: parseInt(formData.get('sets')),
@@ -1461,6 +1479,12 @@ class App {
             <label class="block mb-2 font-medium">Name *</label>
             <input type="text" name="name" value="${(ed && ed.name) || ''}"
                    class="w-full bg-gray-700 p-3 rounded text-lg" style="min-height:48px" required>
+          </div>
+          <div>
+            <label class="flex items-center p-3 bg-gray-700 rounded cursor-pointer mt-2" style="min-height:48px">
+              <input type="checkbox" name="isActivity" ${(ed && ed.isActivity) ? 'checked' : ''} class="mr-3">
+              <span>Is an activity (no workout parameters required)</span>
+            </label>
           </div>
           <div>
             <label class="block mb-2 font-medium">Tool *</label>
