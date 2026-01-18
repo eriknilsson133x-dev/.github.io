@@ -61,11 +61,16 @@ export function setupFormListeners() {
             } catch (e) { /* ignore */ }
           });
 
-        // hide tool select wrapper
+        // hide tool select wrapper and disable/clear validation when activity-only
         try {
           const toolEl = form.querySelector('select[name="tool"]');
           const toolWrap = toolEl ? toolEl.closest('div') : null;
           if (toolWrap) toolWrap.style.display = checked ? 'none' : '';
+          if (toolEl) {
+            toolEl.required = !checked;
+            toolEl.disabled = checked;
+            if (checked) toolEl.value = '';
+          }
         } catch (e) { /* ignore */ }
 
         // hide the entire Type block (label + radios). Find the label that says 'Type' and hide its parent wrapper
@@ -89,17 +94,26 @@ export function setupFormListeners() {
           }
         } catch (e) { /* ignore */ }
 
-        // hide sets wrapper
+        // hide sets wrapper and disable validation
         try {
           const setsEl = form.querySelector('input[name="sets"]');
           const setsWrap = setsEl ? setsEl.closest('div') : null;
           if (setsWrap) setsWrap.style.display = checked ? 'none' : '';
+          if (setsEl) { setsEl.required = !checked; setsEl.disabled = checked; }
         } catch (e) { /* ignore */ }
 
-        // hide the 'Track added weight' label (checkbox) itself
+        // hide the 'Track added weight' label (checkbox) itself and disable weight inputs
         try {
-          const weightLabel = form.querySelector('input[name="hasWeight"]') ? form.querySelector('input[name="hasWeight"]').closest('label') : null;
+          const hasWeightEl = form.querySelector('input[name="hasWeight"]');
+          const weightLabel = hasWeightEl ? hasWeightEl.closest('label') : null;
           if (weightLabel) weightLabel.style.display = checked ? 'none' : '';
+          if (hasWeightEl) { hasWeightEl.disabled = checked; hasWeightEl.checked = false; }
+          const weightInputs = document.getElementById('weight-inputs');
+          if (weightInputs) {
+            weightInputs.style.display = checked ? 'none' : '';
+            // disable contained inputs
+            Array.from(weightInputs.querySelectorAll('input,select')).forEach(i => { i.disabled = checked; });
+          }
         } catch (e) { /* ignore */ }
 
         try { document.body.classList.toggle('activity-only', checked); } catch (e) { /* ignore */ }
