@@ -409,8 +409,8 @@ export class Calendar {
     });
     const activities = this.storage.getActivities() || ['stretching', 'rest', 'recovery'];
     return `
-      <div class="p-4 grid grid-cols-3 gap-4">
-        <div class="col-span-1 bg-white dark:bg-gray-800 rounded-lg p-4">
+      <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-1 bg-white dark:bg-gray-800 rounded-lg p-4">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold">Workouts</h2>
           </div>
@@ -436,7 +436,7 @@ export class Calendar {
             <button onclick="window.app.saveEditorAndReturnForCalendar()" class="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-500">Save</button>
           </div>
         </div>
-        <div class="col-span-2 grid grid-cols-2 gap-3">
+        <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
           ${week.map(d => `
             <div class="bg-gray-800 rounded-lg p-3">
               <div class="flex items-center justify-between mb-2">
