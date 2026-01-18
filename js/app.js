@@ -665,8 +665,11 @@ class App {
 
   saveWorkout(event) {
     event.preventDefault();
-    const formData = new FormData(event.target);
-    const isActivity = formData.get('isActivity') === 'on';
+    const form = event.target;
+    const formData = new FormData(form);
+    // Prefer reading the checkbox `.checked` to avoid FormData inconsistencies
+    const isActivityEl = form.querySelector('input[name="isActivity"]');
+    const isActivity = !!(isActivityEl && isActivityEl.checked);
     if (isActivity) {
       const name = (formData.get('name') || '').trim();
       if (!name) { showToast('Name required'); return; }
