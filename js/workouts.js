@@ -52,14 +52,42 @@ export function setupFormListeners() {
     if (isActivityCb) {
       const toggle = () => {
         const checked = isActivityCb.checked;
-        // hide/show fields that are irrelevant for activities
-        ['tool','fingerBlockMode','type','sets','duration-input','reps-input','repeaters-input','weight-inputs','depth-inputs','rest-input']
+        // hide/show by known element IDs first
+        ['duration-input','reps-input','repeaters-input','depth-inputs','rest-input','weight-inputs','fingerBlockMode']
           .forEach(id => {
             try {
               const el = document.getElementById(id);
               if (el) el.style.display = checked ? 'none' : '';
             } catch (e) { /* ignore */ }
           });
+
+        // hide tool select wrapper
+        try {
+          const toolEl = form.querySelector('select[name="tool"]');
+          const toolWrap = toolEl ? toolEl.closest('div') : null;
+          if (toolWrap) toolWrap.style.display = checked ? 'none' : '';
+        } catch (e) { /* ignore */ }
+
+        // hide type radio wrapper
+        try {
+          const typeEl = form.querySelector('input[name="type"]');
+          const typeWrap = typeEl ? typeEl.closest('div') : null;
+          if (typeWrap) typeWrap.style.display = checked ? 'none' : '';
+        } catch (e) { /* ignore */ }
+
+        // hide sets wrapper
+        try {
+          const setsEl = form.querySelector('input[name="sets"]');
+          const setsWrap = setsEl ? setsEl.closest('div') : null;
+          if (setsWrap) setsWrap.style.display = checked ? 'none' : '';
+        } catch (e) { /* ignore */ }
+
+        // hide the 'Track added weight' label (checkbox) itself
+        try {
+          const weightLabel = form.querySelector('input[name="hasWeight"]') ? form.querySelector('input[name="hasWeight"]').closest('label') : null;
+          if (weightLabel) weightLabel.style.display = checked ? 'none' : '';
+        } catch (e) { /* ignore */ }
+
         try { document.body.classList.toggle('activity-only', checked); } catch (e) { /* ignore */ }
       };
       isActivityCb.addEventListener('change', toggle);
