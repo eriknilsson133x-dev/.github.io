@@ -1,7 +1,7 @@
 // js/app.js
 import { Router } from './router.js';
 import { Storage } from './storage.js';
-import { generateId, validateWorkout, getWorkoutSummary, setupFormListeners, WORKOUT_TYPES } from './workouts.js';
+import { generateId, validateWorkout, getWorkoutSummary, setupFormListeners, WORKOUT_TYPES, showActivitySettings, addActivity, removeActivity } from './workouts.js';
 import { Timer } from './timer.js';
 import { Calendar } from './calendar.js';
 import { Logger } from './logger.js';
@@ -497,15 +497,30 @@ class App {
   }
 
   removeActivityForCalendar(activity) {
-    this.calendar.removeActivity(activity);
+    // Activities managed via workouts module
+    try { removeActivity(activity); } catch (e) { this.calendar.removeActivity(activity); }
   }
 
   addActivityForCalendar() {
-    this.calendar.addActivity();
+    try { addActivity(); } catch (e) { this.calendar.addActivity(); }
   }
 
   showActivitySettingsForCalendar() {
-    this.calendar.showActivitySettings();
+    try { showActivitySettings(); } catch (e) { this.calendar.showActivitySettings(); }
+  }
+
+  // Expose workouts-based activity handlers (used by workouts UI)
+  removeActivityForWorkouts(activity) {
+    try { removeActivity(activity); } catch (e) { /* ignore */ }
+    if (typeof this.render === 'function') this.render();
+  }
+
+  addActivityForWorkouts() {
+    try { addActivity(); } catch (e) { /* ignore */ }
+  }
+
+  showActivitySettingsForWorkouts() {
+    try { showActivitySettings(); } catch (e) { /* ignore */ }
   }
 
   saveEditorAndReturnForCalendar() {
@@ -1344,13 +1359,17 @@ class App {
   renderWorkoutsTab() {
     if (this.state.showWorkoutForm) return this.renderWorkoutForm();
     const workouts = this.storage.getUserWorkouts();
+    const activities = this.storage.get('activities') || ['stretching','rest','recovery'];
     return `
       <div class="p-4">
         <div class="flex justify-between items-center mb-4">
           <h1 class="text-2xl font-bold">Workout Library</h1>
-          <button onclick="app.showCreateWorkout()"
-                  class="bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-500"
-                  style="min-height:48px">+ Create Workout</button>
+          <div class="flex items-center gap-3">
+            <button onclick="app.showCreateWorkout()"
+                    class="bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-500"
+                    style="min-height:48px">+ Create Workout</button>
+            <button onclick="app.showActivitySettingsForWorkouts()" class="px-3 py-2 rounded bg-gray-800 hover:bg-gray-700 text-sm">Manage Activities ⚙️</button>
+          </div>
         </div>
         ${workouts.length === 0 ? `
           <div class="text-center py-12 text-gray-400">
@@ -1382,6 +1401,16 @@ class App {
                 </div>
               </div>`).join('')}
           </div>`}
+
+        <div class="mt-6 bg-gray-800 p-4 rounded-lg">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold">Activities</h2>
+            <button onclick="app.showActivitySettingsForWorkouts()" class="text-gray-400 hover:text-white text-sm">⚙️</button>
+          </div>
+          <div class="space-y-2 max-h-40 overflow-auto">
+            ${activities.map(a => `<div draggable="true" ondragstart="app.calendar.dragStartActivity(event,'${a}')" class="bg-white dark:bg-gray-700 rounded px-3 py-2 cursor-move hover:bg-gray-50 dark:hover:bg-gray-600 mb-2 text-gray-900 dark:text-gray-100">${a.charAt(0).toUpperCase() + a.slice(1)}</div>`).join('')}
+          </div>
+        </div>
       </div>
     `;
   }

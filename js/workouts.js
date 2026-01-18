@@ -104,3 +104,58 @@ export function setupFormListeners() {
     }
   });
 }
+
+// Activity management UI (previously in calendar.js) — expose via workouts module
+export function showActivitySettings() {
+  const activities = (window.app && window.app.storage) ? window.app.storage.get('activities') || ['stretching','rest','recovery'] : ['stretching','rest','recovery'];
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+  modal.innerHTML = `
+    <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full mx-4">
+      <h2 class="text-xl font-bold mb-4">Manage Activities</h2>
+      <div class="space-y-2 mb-4">
+        ${activities.map(activity => `
+          <div class="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
+            <span>${activity.charAt(0).toUpperCase() + activity.slice(1)}</span>
+            <button onclick="window.app.removeActivityForWorkouts('${activity}')" class="text-red-500 hover:text-red-400">✕</button>
+          </div>
+        `).join('')}
+      </div>
+      <div class="flex gap-2">
+        <input id="newActivity" type="text" placeholder="New activity" class="flex-1 bg-white dark:bg-gray-700 p-2 rounded text-gray-900 dark:text-gray-100">
+        <button onclick="window.app.addActivityForWorkouts()" class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500">Add</button>
+      </div>
+      <div class="flex justify-end mt-6">
+        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500 mr-2">Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+export function addActivity() {
+  const input = document.getElementById('newActivity');
+  if (!input) return;
+  const name = input.value.trim().toLowerCase();
+  if (!name) return;
+  const storage = (window.app && window.app.storage) ? window.app.storage : null;
+  const activities = storage ? storage.get('activities') || ['stretching','rest','recovery'] : ['stretching','rest','recovery'];
+  if (!activities.includes(name)) {
+    activities.push(name);
+    if (storage) storage.set('activities', activities);
+  }
+  input.value = '';
+  const ex = document.querySelector('.fixed');
+  if (ex && ex.parentNode) ex.parentNode.removeChild(ex);
+  showActivitySettings();
+}
+
+export function removeActivity(activity) {
+  const storage = (window.app && window.app.storage) ? window.app.storage : null;
+  const activities = storage ? storage.get('activities') || ['stretching','rest','recovery'] : ['stretching','rest','recovery'];
+  const filtered = activities.filter(a => a !== activity);
+  if (storage) storage.set('activities', filtered);
+  const ex = document.querySelector('.fixed');
+  if (ex && ex.parentNode) ex.parentNode.removeChild(ex);
+  showActivitySettings();
+}
