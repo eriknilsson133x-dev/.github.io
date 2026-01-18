@@ -755,6 +755,11 @@ class App {
     console.debug('App.startWorkout', id, date);
     const workout = this.storage.getUserWorkouts().find(w => w.id === id);
     if (!workout) { console.debug('startWorkout: workout not found', id); return; }
+    // If this is an activity, use the activity modal instead
+    if (workout.isActivity) {
+      this.startActivity(workout.name);
+      return;
+    }
     this.state.activeWorkout = id;
     this.state.timerState = {
       phase: 'setup',               // ask for weight first
