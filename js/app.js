@@ -1468,8 +1468,27 @@ class App {
 
         <div class="mt-6">
           <h2 class="text-lg font-semibold mb-2">Activities</h2>
-          <div class="space-y-2 max-h-40 overflow-auto">
-            ${activities.map(a => `<div onclick="app.startActivity('${a}')" class="px-3 py-2 text-gray-200">${a.charAt(0).toUpperCase() + a.slice(1)}</div>`).join('')}
+          <div class="space-y-3">
+            ${activities.map(a => `
+              <div class="bg-white dark:bg-gray-800 p-4 rounded-lg cursor-move hover:bg-gray-50 dark:hover:bg-gray-700" style="min-height:60px">
+                <div class="flex justify-between items-start mb-2">
+                  <div class="flex-1">
+                    <h3 class="font-semibold text-lg">${a.charAt(0).toUpperCase() + a.slice(1)}</h3>
+                    <p class="text-sm text-muted">Activity</p>
+                  </div>
+                </div>
+                <div class="flex gap-2 mt-3">
+                  <button onclick="app.startActivity('${a}')"
+                          class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-500 flex-1"
+                          style="min-height:48px">Start</button>
+                  <button onclick="app.showActivitySettingsForWorkouts()"
+                          class="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                          style="min-height:48px;min-width:48px">⚙️</button>
+                  <button onclick="app.removeActivityForWorkouts('${a}')"
+                          class="bg-red-600 px-4 py-2 rounded hover:bg-red-500"
+                          style="min-height:48px;min-width:48px">🗑️</button>
+                </div>
+              </div>`).join('')}
           </div>
         </div>
       </div>
