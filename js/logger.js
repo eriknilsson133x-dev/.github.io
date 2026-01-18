@@ -183,6 +183,10 @@ export class Logger {
             <label class="block text-sm font-medium mb-1">Climbing</label>
             <input id="climbing-keywords" class="w-full p-2 bg-white dark:bg-gray-700 rounded text-gray-900 dark:text-gray-100" value="${keywords.climbing.join(', ')}">
           </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Strength & Conditioning</label>
+            <input id="strength-keywords" class="w-full p-2 bg-white dark:bg-gray-700 rounded text-gray-900 dark:text-gray-100" value="${(keywords.strength||[]).join(', ')}">
+          </div>
           <div class="border-t border-gray-700 pt-3">
             <div class="flex items-center justify-between mb-2">
               <div class="text-sm font-semibold">Progress Graph Categories</div>
@@ -220,7 +224,9 @@ export class Logger {
     const pull = document.getElementById('pull-keywords').value.split(',').map(s => s.trim()).filter(s => s);
     const board = document.getElementById('board-keywords').value.split(',').map(s => s.trim()).filter(s => s);
     const climbing = document.getElementById('climbing-keywords').value.split(',').map(s => s.trim()).filter(s => s);
+    const strength = (document.getElementById('strength-keywords') ? document.getElementById('strength-keywords').value.split(',').map(s => s.trim()).filter(s => s) : []);
     const keywords = { finger, pull, board, climbing };
+    if (strength && strength.length) keywords.strength = strength;
 
     // Collect dynamic progress categories
     const progressCategories = [];

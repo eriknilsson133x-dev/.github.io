@@ -14,7 +14,7 @@ function renderVolumeChart(log, storage) {
   const ctx = document.getElementById('volumeChart');
   if (!ctx || !storage) return;
 
-  const categories = { finger: 0, pull: 0, board: 0, climbing: 0 };
+  const categories = { finger: 0, pull: 0, board: 0, climbing: 0, strength: 0 };
   const cutoff     = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const keywords = storage.get('chartKeywords') || defaultKeywords;
 
@@ -35,13 +35,13 @@ function renderVolumeChart(log, storage) {
     if (!matched) categories.climbing++;
   });
 
-  new Chart(ctx, {
+    new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: ['Finger Training', 'Pull-ups', 'Board Climbing', 'Climbing'],
+      labels: ['Finger Training', 'Pull-ups', 'Board Climbing', 'Climbing', 'Strength & Conditioning'],
       datasets: [{
-        data: [categories.finger, categories.pull, categories.board, categories.climbing],
-        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+        data: [categories.finger, categories.pull, categories.board, categories.climbing, categories.strength],
+        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
       }]
     },
     options: {
