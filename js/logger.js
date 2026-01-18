@@ -335,7 +335,7 @@ export class Logger {
                     return `
                         <div class="bg-white dark:bg-gray-800 rounded-lg overflow-hidden log-entry">
                           <div class="flex items-center">
-                            <div onclick="app.logger.toggleAccordion(${originalIdx}); app.logger.toggleActive(${originalIdx})" class="flex-1 p-4 text-left log-entry-content" style="min-height:60px;cursor:pointer">
+                            <div onclick="app.logger.toggleAccordion(${originalIdx}); app.logger.toggleActive(${originalIdx})" class="flex-1 p-4 text-left log-entry-content" style="min-height:44px;cursor:pointer">
                                 <div class="font-semibold">
                                   ${entry.workoutName} ${entry.isPR ? ' 🏆' : ''}
                                 </div>

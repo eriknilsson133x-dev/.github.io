@@ -1470,7 +1470,7 @@ class App {
             ${workouts.map(w => `
                   <div draggable="true" ondragstart="app.calendar.dragStart(event,'${w.id}')"
                     class="bg-white dark:bg-gray-800 p-4 rounded-lg cursor-move hover:bg-gray-50 dark:hover:bg-gray-700"
-                   style="min-height:60px">
+                   style="min-height:44px">
                 <div class="flex justify-between items-start mb-2">
                   <div class="flex-1">
                     <h3 class="font-semibold text-lg">${w.name}</h3>
@@ -1496,7 +1496,7 @@ class App {
           <h2 class="text-lg font-semibold mb-2">Activities</h2>
           <div class="space-y-3">
             ${activities.map(a => `
-              <div class="bg-white dark:bg-gray-800 p-4 rounded-lg cursor-move hover:bg-gray-50 dark:hover:bg-gray-700" style="min-height:60px">
+              <div class="bg-white dark:bg-gray-800 p-4 rounded-lg cursor-move hover:bg-gray-50 dark:hover:bg-gray-700" style="min-height:44px">
                 <div class="flex justify-between items-start mb-2">
                   <div class="flex-1">
                     <h3 class="font-semibold text-lg">${(a.name && (a.name.charAt(0).toUpperCase() + a.name.slice(1)))}</h3>
