@@ -60,6 +60,7 @@ export function setupFormListeners() {
               if (el) el.style.display = checked ? 'none' : '';
             } catch (e) { /* ignore */ }
           });
+        try { document.body.classList.toggle('activity-only', checked); } catch (e) { /* ignore */ }
       };
       isActivityCb.addEventListener('change', toggle);
       // initialize

@@ -199,6 +199,10 @@ button { display: inline-flex; align-items: center; justify-content: center; min
 /* Make the inner day box slightly blue in Light theme */
 .theme-light .day-card .min-h-\[40px\] { background: var(--inner) !important; }
 
+/* When creating an activity, hide all other page content and focus on the form */
+body.activity-only #app > *:not(#workoutFormWrap) { display: none !important; }
+body.activity-only #workoutFormWrap { display: block !important; position: relative; z-index: 99999 !important; }
+
 /* High-specificity override in case utility classes or inline styles interfere: use a darker light tint */
 html.theme-light .day-card .min-h-\[40px\] {
   background: #b6e0ff !important;

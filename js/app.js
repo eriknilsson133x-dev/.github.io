@@ -1288,7 +1288,7 @@ class App {
       phaseLabel = 'GET READY';
     }
     return `
-      <div class="p-4">
+      <div id="workoutFormWrap" class="p-4">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-2xl font-bold">${w.name}</h2>
           <button onclick="app.cancelWorkout()" class="px-3 py-1 rounded bg-gray-700">Cancel</button>
