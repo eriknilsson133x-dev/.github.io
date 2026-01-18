@@ -568,18 +568,6 @@ class App {
     this.calendar.toggleActivityCompleted(date, id);
   }
 
-  removeActivityForCalendar(activity) {
-    // Activities managed via workouts module
-    try { removeActivity(activity); } catch (e) { this.calendar.removeActivity(activity); }
-  }
-
-  addActivityForCalendar() {
-    try { addActivity(); } catch (e) { this.calendar.addActivity(); }
-  }
-
-  showActivitySettingsForCalendar() {
-    try { showActivitySettings(); } catch (e) { this.calendar.showActivitySettings(); }
-  }
 
   // Expose workouts-based activity handlers (used by workouts UI)
   removeActivityForWorkouts(activity) {

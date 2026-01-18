@@ -358,71 +358,7 @@ export class Calendar {
     if (overlay) overlay.style.pointerEvents = 'none';
   }
 
-  showActivitySettings() {
-    const activities = this.storage.getActivities() || ['stretching', 'rest', 'recovery'];
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-    modal.innerHTML = `
-      <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full mx-4">
-        <h2 class="text-xl font-bold mb-4">Manage Activities</h2>
-        <div class="space-y-2 mb-4">
-          ${activities.map(activity => `
-            <div class="flex items-center justify-between bg-gray-700 rounded px-3 py-2">
-              <span>${activity.charAt(0).toUpperCase() + activity.slice(1)}</span>
-              <button onclick="window.app.removeActivityForCalendar('${activity}')" class="text-red-500 hover:text-red-400">✕</button>
-            </div>
-          `).join('')}
-        </div>
-        <div class="flex gap-2">
-          <input id="newActivity" type="text" placeholder="New activity" class="flex-1 bg-white dark:bg-gray-700 p-2 rounded text-gray-900 dark:text-gray-100">
-          <button onclick="window.app.addActivityForCalendar()" class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500">Add</button>
-        </div>
-        <div class="flex justify-end mt-6">
-          <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500 mr-2">Close</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  }
-
-  addActivity() {
-    const input = document.getElementById('newActivity');
-    const name = input.value.trim().toLowerCase();
-    if (!name) return;
-    try { this.storage.addActivity(name); } catch (e) { console.error('addActivity failed', e); }
-    input.value = '';
-    // refresh modal
-    document.querySelector('.fixed').remove();
-    this.showActivitySettings();
-    // if the plan sidebar is open, refresh it so the new activity appears immediately
-    try {
-      const sidebarWrap = document.getElementById('planSidebarWrap');
-      if (sidebarWrap) {
-        this.closePlanModal();
-        this.openPlanModal();
-      } else if (window.app && typeof window.app.renderPlanEditor === 'function') {
-        // if user is on the full editor, re-render it
-        window.app.renderPlanEditor();
-      }
-    } catch (e) { /* ignore */ }
-  }
-
-  removeActivity(activity) {
-    try { this.storage.removeActivity(activity); } catch (e) { console.error('removeActivity failed', e); }
-    // refresh modal
-    document.querySelector('.fixed').remove();
-    this.showActivitySettings();
-    // refresh sidebar/editor if open so removal is reflected immediately
-    try {
-      const sidebarWrap = document.getElementById('planSidebarWrap');
-      if (sidebarWrap) {
-        this.closePlanModal();
-        this.openPlanModal();
-      } else if (window.app && typeof window.app.renderPlanEditor === 'function') {
-        window.app.renderPlanEditor();
-      }
-    } catch (e) { /* ignore */ }
-  }
+  // Activity management modal & helpers moved to `workouts.js` — calendar no longer provides them.
 
   drop(ev, date) {
     ev.preventDefault();
@@ -465,7 +401,7 @@ export class Calendar {
   /* ---------- full-page planner editor ---------- */
   renderEditor() {
     const week = this.getWeekDays();
-    const workouts = this.storage.getUserWorkouts();
+    const workouts = (this.storage.getUserWorkouts() || []).filter(w => !w || !w.isActivity);
     const activities = this.storage.getActivities() || ['stretching', 'rest', 'recovery'];
     return `
       <div class="p-4 grid grid-cols-3 gap-4">
