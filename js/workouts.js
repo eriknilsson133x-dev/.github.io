@@ -107,7 +107,7 @@ export function setupFormListeners() {
 
 // Activity management UI (previously in calendar.js) — expose via workouts module
 export function showActivitySettings() {
-  const activities = (window.app && window.app.storage) ? window.app.storage.get('activities') || ['stretching','rest','recovery'] : ['stretching','rest','recovery'];
+  const activities = (window.app && window.app.storage) ? window.app.storage.getActivities() || ['stretching','rest','recovery'] : ['stretching','rest','recovery'];
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
   modal.innerHTML = `
@@ -139,11 +139,7 @@ export function addActivity() {
   const name = input.value.trim().toLowerCase();
   if (!name) return;
   const storage = (window.app && window.app.storage) ? window.app.storage : null;
-  const activities = storage ? storage.get('activities') || ['stretching','rest','recovery'] : ['stretching','rest','recovery'];
-  if (!activities.includes(name)) {
-    activities.push(name);
-    if (storage) storage.set('activities', activities);
-  }
+  if (storage) storage.addActivity(name);
   input.value = '';
   const ex = document.querySelector('.fixed');
   if (ex && ex.parentNode) ex.parentNode.removeChild(ex);
@@ -152,9 +148,7 @@ export function addActivity() {
 
 export function removeActivity(activity) {
   const storage = (window.app && window.app.storage) ? window.app.storage : null;
-  const activities = storage ? storage.get('activities') || ['stretching','rest','recovery'] : ['stretching','rest','recovery'];
-  const filtered = activities.filter(a => a !== activity);
-  if (storage) storage.set('activities', filtered);
+  if (storage) storage.removeActivity(activity);
   const ex = document.querySelector('.fixed');
   if (ex && ex.parentNode) ex.parentNode.removeChild(ex);
   showActivitySettings();

@@ -89,6 +89,41 @@ class App {
 
   }
 
+  startActivity(name) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+      <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full mx-4">
+        <h2 class="text-xl font-bold mb-4">${name.charAt(0).toUpperCase() + name.slice(1)}</h2>
+        <textarea id="activityNote" class="w-full bg-gray-900 p-3 rounded text-sm mb-4" rows="4" placeholder="Optional note (how did it go?)"></textarea>
+        <div class="flex justify-end gap-3">
+          <button id="cancelAct" class="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500">Cancel</button>
+          <button id="saveAct" class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500">Save</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('#cancelAct').onclick = () => modal.remove();
+    modal.querySelector('#saveAct').onclick = () => {
+      const note = (document.getElementById('activityNote') || {}).value || '';
+      const entry = {
+        date: new Date().toISOString(),
+        workoutId: null,
+        workoutName: name.charAt(0).toUpperCase() + name.slice(1),
+        bestValue: 0,
+        isPR: false,
+        summary: note ? `${name.charAt(0).toUpperCase() + name.slice(1)} — ${note}` : (name.charAt(0).toUpperCase() + name.slice(1)),
+        details: []
+      };
+      try { if (this.logger && typeof this.logger.addEntry === 'function') this.logger.addEntry(entry); } catch (e) { console.error('Failed to add log entry for activity', e); }
+      modal.remove();
+      if (typeof this.render === 'function') this.render();
+    };
+  }
+
+  startActivityFromCalendar(name) {
+    return this.startActivity(name);
+  }
+
   // NoSleep fallback using the video trick similar to NoSleep.js.
   // Creates a tiny hidden looping video element that plays a silent WebM to keep the device awake.
   _ensureNoSleep() {
@@ -1359,7 +1394,7 @@ class App {
   renderWorkoutsTab() {
     if (this.state.showWorkoutForm) return this.renderWorkoutForm();
     const workouts = this.storage.getUserWorkouts();
-    const activities = this.storage.get('activities') || ['stretching','rest','recovery'];
+    const activities = this.storage.getActivities() || ['stretching','rest','recovery'];
     return `
       <div class="p-4">
         <div class="flex justify-between items-center mb-4">
@@ -1408,7 +1443,7 @@ class App {
             <button onclick="app.showActivitySettingsForWorkouts()" class="text-gray-400 hover:text-white text-sm">⚙️</button>
           </div>
           <div class="space-y-2 max-h-40 overflow-auto">
-            ${activities.map(a => `<div draggable="true" ondragstart="app.calendar.dragStartActivity(event,'${a}')" class="bg-white dark:bg-gray-700 rounded px-3 py-2 cursor-move hover:bg-gray-50 dark:hover:bg-gray-600 mb-2 text-gray-900 dark:text-gray-100">${a.charAt(0).toUpperCase() + a.slice(1)}</div>`).join('')}
+            ${activities.map(a => `<div draggable="true" ondragstart="app.calendar.dragStartActivity(event,'${a}')" onclick="app.startActivity('${a}')" class="bg-white dark:bg-gray-700 rounded px-3 py-2 cursor-move hover:bg-gray-50 dark:hover:bg-gray-600 mb-2 text-gray-900 dark:text-gray-100">${a.charAt(0).toUpperCase() + a.slice(1)}</div>`).join('')}
           </div>
         </div>
       </div>

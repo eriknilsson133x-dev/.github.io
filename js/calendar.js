@@ -117,7 +117,7 @@ export class Calendar {
     // show a sliding right-hand sidebar instead of a centered modal
     const date = this.getWeekDays()[0]; // today
     const workouts = this.storage.getUserWorkouts();
-    const activities = this.storage.get('activities') || ['stretching', 'rest', 'recovery'];
+    const activities = this.storage.getActivities() || ['stretching', 'rest', 'recovery'];
 
     const wrap = document.createElement('div');
     wrap.id = 'planSidebarWrap';
@@ -359,7 +359,7 @@ export class Calendar {
   }
 
   showActivitySettings() {
-    const activities = this.storage.get('activities') || ['stretching', 'rest', 'recovery'];
+    const activities = this.storage.getActivities() || ['stretching', 'rest', 'recovery'];
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
     modal.innerHTML = `
@@ -389,11 +389,7 @@ export class Calendar {
     const input = document.getElementById('newActivity');
     const name = input.value.trim().toLowerCase();
     if (!name) return;
-    const activities = this.storage.get('activities') || ['stretching', 'rest', 'recovery'];
-    if (!activities.includes(name)) {
-      activities.push(name);
-      this.storage.set('activities', activities);
-    }
+    try { this.storage.addActivity(name); } catch (e) { console.error('addActivity failed', e); }
     input.value = '';
     // refresh modal
     document.querySelector('.fixed').remove();
@@ -412,9 +408,7 @@ export class Calendar {
   }
 
   removeActivity(activity) {
-    const activities = this.storage.get('activities') || ['stretching', 'rest', 'recovery'];
-    const filtered = activities.filter(a => a !== activity);
-    this.storage.set('activities', filtered);
+    try { this.storage.removeActivity(activity); } catch (e) { console.error('removeActivity failed', e); }
     // refresh modal
     document.querySelector('.fixed').remove();
     this.showActivitySettings();
@@ -472,7 +466,7 @@ export class Calendar {
   renderEditor() {
     const week = this.getWeekDays();
     const workouts = this.storage.getUserWorkouts();
-    const activities = this.storage.get('activities') || ['stretching', 'rest', 'recovery'];
+    const activities = this.storage.getActivities() || ['stretching', 'rest', 'recovery'];
     return `
       <div class="p-4 grid grid-cols-3 gap-4">
         <div class="col-span-1 bg-white dark:bg-gray-800 rounded-lg p-4">
@@ -491,6 +485,7 @@ export class Calendar {
               </div>
               ${activities.map(activity => `
                  <div draggable="true" ondragstart="window.app.dragStartActivityForCalendar(event,'${activity}')" ondragend="window.app.dragEndForCalendar(event)"
+                   onclick="window.app.startActivityFromCalendar('${activity}')"
                    class="bg-white dark:bg-gray-700 rounded px-3 py-2 cursor-move hover:bg-gray-50 dark:hover:bg-gray-600 mb-2 text-gray-900 dark:text-gray-100">${activity.charAt(0).toUpperCase() + activity.slice(1)}</div>
               `).join('')}
             </div>

@@ -6,7 +6,7 @@ export class Storage {
       log: [],
       prs: {},
       userWorkouts: [],
-      activities: ['stretching','rest','recovery'],
+      // activities are stored as special entries inside `userWorkouts` with `isActivity: true`.
       autoSyncAfterWorkout: true
     };
   }
@@ -26,6 +26,27 @@ export class Storage {
 
   getUserWorkouts() {
     return this.get('userWorkouts');
+  }
+
+  getActivities() {
+    const workouts = this.getUserWorkouts() || [];
+    return workouts.filter(w => w && w.isActivity).map(a => a.name);
+  }
+
+  addActivity(name) {
+    if (!name) return;
+    const workouts = this.getUserWorkouts() || [];
+    const id = `activity:${name}`;
+    if (!workouts.find(w => w.id === id)) {
+      workouts.push({ id, name, isActivity: true });
+      this.set('userWorkouts', workouts);
+    }
+  }
+
+  removeActivity(name) {
+    if (!name) return;
+    const workouts = (this.getUserWorkouts() || []).filter(w => !(w && w.isActivity && w.name === name));
+    this.set('userWorkouts', workouts);
   }
 
   saveUserWorkout(workout) {
@@ -52,7 +73,7 @@ export class Storage {
       planRecurring: this.get('planRecurring') || {},
       planCompleted: this.get('planCompleted') || {},
       planNotes: this.get('planNotes') || {},
-      activities: this.get('activities') || [],
+      activities: this.getActivities() || [],
       log: this.get('log'),
       prs: this.get('prs'),
       userWorkouts: this.get('userWorkouts'),
@@ -66,7 +87,13 @@ export class Storage {
     if (data.planRecurring) this.set('planRecurring', data.planRecurring);
     if (data.planCompleted) this.set('planCompleted', data.planCompleted);
     if (data.planNotes) this.set('planNotes', data.planNotes);
-    if (data.activities) this.set('activities', data.activities);
+    if (data.activities && Array.isArray(data.activities)) {
+      // merge activities into userWorkouts as `isActivity` entries
+      const existing = this.getUserWorkouts() || [];
+      const filtered = existing.filter(w => !(w && w.isActivity));
+      const activities = data.activities.map(a => ({ id: `activity:${a}`, name: a, isActivity: true }));
+      this.set('userWorkouts', filtered.concat(activities));
+    }
     if (data.log) this.set('log', data.log);
     if (data.prs) this.set('prs', data.prs);
     if (data.userWorkouts) this.set('userWorkouts', data.userWorkouts);
