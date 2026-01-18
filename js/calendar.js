@@ -436,11 +436,11 @@ export class Calendar {
             <button onclick="window.app.saveEditorAndReturnForCalendar()" class="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-500">Save</button>
           </div>
         </div>
-        <div class="col-span-2 space-y-3">
+        <div class="col-span-2 grid grid-cols-2 gap-3">
           ${week.map(d => `
             <div class="bg-gray-800 rounded-lg p-3">
               <div class="flex items-center justify-between mb-2">
-                <div class="font-medium">${new Date(d).toLocaleDateString(undefined, { weekday: 'short' })}</div>
+                <div class="font-medium">${new Date(d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</div>
                 <button onclick="window.app.editNoteForCalendar('${d}')" class="text-xs ml-2">📝</button>
               </div>
               ${this.notes[d] ? `<div class="text-xs text-gray-400 mb-2 truncate">📝 ${this.notes[d]}</div>` : ''}
