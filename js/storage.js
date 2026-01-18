@@ -36,10 +36,23 @@ export class Storage {
   addActivity(name) {
     if (!name) return;
     const workouts = this.getUserWorkouts() || [];
-    const id = `activity:${name}`;
-    if (!workouts.find(w => w.id === id)) {
-      workouts.push({ id, name, isActivity: true });
-      this.set('userWorkouts', workouts);
+    const norm = (name || '').toLowerCase().trim();
+    // remove any existing non-activity workouts that have the same name (case-insensitive)
+    const filtered = workouts.filter(w => {
+      try {
+        if (!w) return false;
+        if (w.isActivity) return true;
+        const wn = (w.name || '').toLowerCase().trim();
+        return wn !== norm;
+      } catch (e) { return true; }
+    });
+    const id = `activity:${norm}`;
+    if (!filtered.find(w => w && w.id === id)) {
+      filtered.push({ id, name: norm, isActivity: true });
+      this.set('userWorkouts', filtered);
+    } else {
+      // ensure the activity is saved if it already exists
+      this.set('userWorkouts', filtered);
     }
   }
 
