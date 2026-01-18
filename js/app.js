@@ -1470,7 +1470,6 @@ class App {
             <button onclick="app.showCreateWorkout()"
                     class="bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-500"
                     style="min-height:48px">+ Create Workout</button>
-            <button onclick="app.showActivitySettingsForWorkouts()" class="px-3 py-2 rounded bg-gray-800 hover:bg-gray-700 text-sm">Manage Activities ⚙️</button>
           </div>
         </div>
         ${workouts.length === 0 ? `
