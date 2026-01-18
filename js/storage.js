@@ -222,20 +222,22 @@ export class Storage {
   // options: { owner, repo, path, branch, token, message }
   async saveToGitHub(options) {
     try {
-      const { owner, repo, path = 'data/backup.json', branch = 'main', token, message = 'crimpd backup' } = options || {};
+      const { owner, repo, path = 'data/backup.json', branch = 'main', token, message = 'crimpd backup', force = false } = options || {};
       if (!owner || !repo || !path) throw new Error('owner, repo and path are required');
       const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
       const payload = this.export();
       const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
 
-      // Check if file exists to get sha
+      // Check if file exists to get sha (skip if force overwrite)
       let sha = null;
-      const getRes = await fetch(apiBase + `?ref=${encodeURIComponent(branch)}`, {
-        headers: token ? { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' } : { Accept: 'application/vnd.github.v3+json' }
-      });
-      if (getRes.ok) {
-        const j = await getRes.json();
-        if (j && j.sha) sha = j.sha;
+      if (!force) {
+        const getRes = await fetch(apiBase + `?ref=${encodeURIComponent(branch)}`, {
+          headers: token ? { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' } : { Accept: 'application/vnd.github.v3+json' }
+        });
+        if (getRes.ok) {
+          const j = await getRes.json();
+          if (j && j.sha) sha = j.sha;
+        }
       }
 
       const body = { message, content, branch };

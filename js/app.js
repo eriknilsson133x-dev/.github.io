@@ -425,6 +425,7 @@ class App {
           <label class="flex items-center gap-2 text-sm"><input id="gh-remember" type="checkbox" ${savedToken ? 'checked' : ''}> Remember token in browser (localStorage)</label>
           <input id="gh-message" class="p-2 bg-gray-600 rounded text-gray-100" placeholder="Commit message" value="${savedMessage}">
           <label class="flex items-center gap-2 text-sm"><input id="gh-autoload" type="checkbox" ${savedAutoLoad ? 'checked' : ''}> Auto-load backup on startup</label>
+          <label class="flex items-center gap-2 text-sm"><input id="gh-force" type="checkbox"> Force overwrite (bypass SHA check)</label>
           <div class="flex gap-2">
             <button id="gh-save" class="px-4 py-2 bg-green-600 text-white rounded">Save to GitHub</button>
             <button id="gh-load" class="px-4 py-2 bg-yellow-600 text-white rounded">Load from GitHub</button>
@@ -449,6 +450,8 @@ class App {
             const message = ghForm.querySelector('#gh-message').value.trim() || 'crimpd backup from web';
             const autoLoadEl = ghForm.querySelector('#gh-autoload');
             const autoLoad = !!(autoLoadEl && autoLoadEl.checked);
+            const forceEl = ghForm.querySelector('#gh-force');
+            const force = !!(forceEl && forceEl.checked);
           if (!repoVal || !path) return alert('Please provide repo and path');
           const parts = repoVal.split('/');
           if (parts.length < 2) return alert('Repo must be in owner/repo format');
@@ -459,7 +462,7 @@ class App {
           }
           if (remember && token) this.storage.set('githubToken', token); else this.storage.clear('githubToken');
           this.storage.set('githubAutoLoad', !!autoLoad);
-          await this.storage.saveToGitHub({ owner, repo, path, branch, token, message });
+          await this.storage.saveToGitHub({ owner, repo, path, branch, token, message, force });
           alert('Saved to GitHub');
         } catch (err) { console.error(err); alert('Save to GitHub failed: ' + (err && err.message)); }
       });
