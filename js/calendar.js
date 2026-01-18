@@ -417,16 +417,18 @@ export class Calendar {
           <div class="space-y-2 max-h-[70vh] overflow-auto">
               ${workouts.length ? workouts.map(w => `
                 <div draggable="true" ondragstart="window.app.dragStartForCalendar(event,'${w.id}')" ondragend="window.app.dragEndForCalendar(event)"
-                  class="bg-white dark:bg-gray-700 rounded px-3 py-2 cursor-move hover:bg-gray-50 dark:hover:bg-gray-600 mb-2 text-gray-900 dark:text-gray-100">${w.name}</div>`).join('')
+                   class="bg-white dark:bg-gray-700 rounded cursor-move hover:bg-gray-50 dark:hover:bg-gray-600 mb-2 text-gray-900 dark:text-gray-100"
+                   style="padding:6px 8px;min-height:44px">${w.name}</div>`).join('')
               : '<p class="text-gray-400 text-sm">No workouts yet. Create one first.</p>'}
             <div class="mt-4 pt-4 border-t border-gray-600">
               <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm font-semibold">Activities</h3>
               </div>
               ${activities.map(activity => `
-                 <div draggable="true" ondragstart="window.app.dragStartActivityForCalendar(event,'${activity}')" ondragend="window.app.dragEndForCalendar(event)"
-                   onclick="window.app.startActivityFromCalendar('${activity}')"
-                   class="bg-white dark:bg-gray-700 rounded px-3 py-2 cursor-move hover:bg-gray-50 dark:hover:bg-gray-600 mb-2 text-gray-900 dark:text-gray-100">${activity.charAt(0).toUpperCase() + activity.slice(1)}</div>
+                <div draggable="true" ondragstart="window.app.dragStartActivityForCalendar(event,'${activity}')" ondragend="window.app.dragEndForCalendar(event)"
+                     onclick="window.app.startActivityFromCalendar('${activity}')"
+                     class="bg-white dark:bg-gray-700 rounded cursor-move hover:bg-gray-50 dark:hover:bg-gray-600 mb-2 text-gray-900 dark:text-gray-100"
+                     style="padding:6px 8px;min-height:44px">${activity.charAt(0).toUpperCase() + activity.slice(1)}</div>
               `).join('')}
             </div>
           </div>
