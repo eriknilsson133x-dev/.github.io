@@ -1414,7 +1414,7 @@ class App {
 
   renderWorkoutsTab() {
     if (this.state.showWorkoutForm) return this.renderWorkoutForm();
-    const workouts = this.storage.getUserWorkouts();
+    const workouts = (this.storage.getUserWorkouts() || []).filter(w => !w || !w.isActivity);
     const activities = this.storage.getActivities() || ['stretching','rest','recovery'];
     return `
       <div class="p-4">
