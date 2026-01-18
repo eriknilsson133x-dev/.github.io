@@ -1466,13 +1466,10 @@ class App {
               </div>`).join('')}
           </div>`}
 
-        <div class="mt-6 bg-gray-800 p-4 rounded-lg">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-semibold">Activities</h2>
-            <button onclick="app.showActivitySettingsForWorkouts()" class="text-gray-400 hover:text-white text-sm">⚙️</button>
-          </div>
+        <div class="mt-6">
+          <h2 class="text-lg font-semibold mb-2">Activities</h2>
           <div class="space-y-2 max-h-40 overflow-auto">
-            ${activities.map(a => `<div draggable="true" ondragstart="app.calendar.dragStartActivity(event,'${a}')" onclick="app.startActivity('${a}')" class="bg-white dark:bg-gray-700 rounded px-3 py-2 cursor-move hover:bg-gray-50 dark:hover:bg-gray-600 mb-2 text-gray-900 dark:text-gray-100">${a.charAt(0).toUpperCase() + a.slice(1)}</div>`).join('')}
+            ${activities.map(a => `<div onclick="app.startActivity('${a}')" class="px-3 py-2 text-gray-200">${a.charAt(0).toUpperCase() + a.slice(1)}</div>`).join('')}
           </div>
         </div>
       </div>
