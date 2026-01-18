@@ -124,6 +124,43 @@ class App {
     return this.startActivity(name);
   }
 
+  editActivity(oldName) {
+    const workouts = this.storage.getUserWorkouts() || [];
+    const act = workouts.find(w => w && w.isActivity && w.name === oldName) || null;
+    const currentName = act ? (act.name || oldName) : oldName;
+    const currentNote = act ? (act.note || '') : '';
+
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+      <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full mx-4">
+        <h2 class="text-xl font-bold mb-4">Edit Activity</h2>
+        <div class="space-y-3">
+          <div>
+            <label class="block mb-2 font-medium">Name</label>
+            <input id="editActivityName" class="w-full bg-gray-700 p-3 rounded text-lg" value="${currentName}" />
+          </div>
+          <div>
+            <label class="block mb-2 font-medium">Note (subtitle)</label>
+            <input id="editActivityNote" class="w-full bg-gray-700 p-3 rounded text-lg" value="${currentNote}" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-4">
+          <button id="cancelEditAct" class="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500">Cancel</button>
+          <button id="saveEditAct" class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500">Save</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('#cancelEditAct').onclick = () => modal.remove();
+    modal.querySelector('#saveEditAct').onclick = () => {
+      const newName = (document.getElementById('editActivityName') || {}).value || '';
+      const newNote = (document.getElementById('editActivityNote') || {}).value || '';
+      try { this.storage.updateActivity(oldName, newName, newNote); } catch (e) { console.error('updateActivity failed', e); }
+      modal.remove();
+      if (typeof this.render === 'function') this.render();
+    };
+  }
+
   // NoSleep fallback using the video trick similar to NoSleep.js.
   // Creates a tiny hidden looping video element that plays a silent WebM to keep the device awake.
   _ensureNoSleep() {
@@ -1415,7 +1452,8 @@ class App {
   renderWorkoutsTab() {
     if (this.state.showWorkoutForm) return this.renderWorkoutForm();
     const allWorkouts = this.storage.getUserWorkouts() || [];
-    const activityNames = (this.storage.getActivities() || []).map(a => (a || '').toLowerCase().trim());
+    const activityEntries = this.storage.getActivityEntries ? (this.storage.getActivityEntries() || []) : (this.storage.getActivities() || []).map(a => ({ name: a, note: '' }));
+    const activityNames = (activityEntries || []).map(a => (a.name || '').toLowerCase().trim());
     const workouts = allWorkouts.filter(w => {
       if (!w) return false;
       if (w.isActivity) return false;
@@ -1423,7 +1461,7 @@ class App {
       if (name && activityNames.includes(name)) return false;
       return true;
     });
-    const activities = this.storage.getActivities() || ['stretching','rest','recovery'];
+    const activities = activityEntries.length ? activityEntries : [{ name: 'stretching', note: '' }, { name: 'rest', note: '' }, { name: 'recovery', note: '' }];
     return `
       <div class="p-4">
         <div class="flex justify-between items-center mb-4">
@@ -1473,18 +1511,18 @@ class App {
               <div class="bg-white dark:bg-gray-800 p-4 rounded-lg cursor-move hover:bg-gray-50 dark:hover:bg-gray-700" style="min-height:60px">
                 <div class="flex justify-between items-start mb-2">
                   <div class="flex-1">
-                    <h3 class="font-semibold text-lg">${a.charAt(0).toUpperCase() + a.slice(1)}</h3>
-                    <p class="text-sm text-muted">Activity</p>
+                    <h3 class="font-semibold text-lg">${(a.name && (a.name.charAt(0).toUpperCase() + a.name.slice(1)))}</h3>
+                    <p class="text-sm text-muted">${(a.note && a.note.length) ? a.note : 'Activity'}</p>
                   </div>
                 </div>
                 <div class="flex gap-2 mt-3">
-                  <button onclick="app.startActivity('${a}')"
+                  <button onclick="app.startActivity('${a.name}')"
                           class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-500 flex-1"
                           style="min-height:48px">Start</button>
-                  <button onclick="app.showActivitySettingsForWorkouts()"
+                  <button onclick="app.editActivity('${a.name}')"
                           class="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
-                          style="min-height:48px;min-width:48px">⚙️</button>
-                  <button onclick="app.removeActivityForWorkouts('${a}')"
+                          style="min-height:48px;min-width:48px">✏️</button>
+                  <button onclick="app.removeActivityForWorkouts('${a.name}')"
                           class="bg-red-600 px-4 py-2 rounded hover:bg-red-500"
                           style="min-height:48px;min-width:48px">🗑️</button>
                 </div>

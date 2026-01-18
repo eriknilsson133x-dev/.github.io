@@ -33,6 +33,11 @@ export class Storage {
     return workouts.filter(w => w && w.isActivity).map(a => a.name);
   }
 
+  getActivityEntries() {
+    const workouts = this.getUserWorkouts() || [];
+    return workouts.filter(w => w && w.isActivity).map(a => ({ name: a.name, note: a.note || '' }));
+  }
+
   addActivity(name) {
     if (!name) return;
     const workouts = this.getUserWorkouts() || [];
@@ -60,6 +65,43 @@ export class Storage {
     if (!name) return;
     const workouts = (this.getUserWorkouts() || []).filter(w => !(w && w.isActivity && w.name === name));
     this.set('userWorkouts', workouts);
+  }
+
+  updateActivity(oldName, newName, note) {
+    if (!oldName || !newName) return;
+    const workouts = this.getUserWorkouts() || [];
+    const oldNorm = (oldName || '').toLowerCase().trim();
+    const newNorm = (newName || '').toLowerCase().trim();
+
+    // remove any non-activity workouts that conflict with the new name
+    const filtered = workouts.filter(w => {
+      try {
+        if (!w) return false;
+        if (w.isActivity) return true;
+        const wn = (w.name || '').toLowerCase().trim();
+        return wn !== newNorm;
+      } catch (e) { return true; }
+    });
+
+    // find existing activity entries
+    const existingIdx = filtered.findIndex(w => w && w.isActivity && w.name === newNorm);
+    const oldIdx = filtered.findIndex(w => w && w.isActivity && w.name === oldNorm);
+
+    if (existingIdx >= 0 && oldIdx >= 0 && existingIdx !== oldIdx) {
+      // merge into existing: update note and remove old
+      filtered[existingIdx].note = note || '';
+      filtered.splice(oldIdx, 1);
+    } else if (oldIdx >= 0) {
+      // update the old entry
+      filtered[oldIdx].name = newNorm;
+      filtered[oldIdx].id = `activity:${newNorm}`;
+      filtered[oldIdx].note = note || '';
+    } else {
+      // add new activity
+      filtered.push({ id: `activity:${newNorm}`, name: newNorm, isActivity: true, note: note || '' });
+    }
+
+    this.set('userWorkouts', filtered);
   }
 
   saveUserWorkout(workout) {
