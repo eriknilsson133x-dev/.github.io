@@ -104,6 +104,23 @@ export class Storage {
     this.set('userWorkouts', filtered);
   }
 
+  // One-time migration: remove non-activity workouts that conflict with activity names
+  dedupeActivityConflicts() {
+    const workouts = this.getUserWorkouts() || [];
+    const activityNames = new Set(workouts.filter(w => w && (w.isActivity || (w.id||'').startsWith('activity:'))).map(a => (a.name||'').toLowerCase().trim()));
+    let changed = false;
+    const filtered = workouts.filter(w => {
+      if (!w) return false;
+      // keep activity entries
+      if (w.isActivity || (w.id||'').startsWith('activity:')) return true;
+      const wn = (w.name||'').toLowerCase().trim();
+      if (wn && activityNames.has(wn)) { changed = true; return false; }
+      return true;
+    });
+    if (changed) this.set('userWorkouts', filtered);
+    return changed;
+  }
+
   saveUserWorkout(workout) {
     const workouts = this.getUserWorkouts();
     const index = workouts.findIndex(w => w.id === workout.id);

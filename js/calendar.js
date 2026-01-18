@@ -401,7 +401,12 @@ export class Calendar {
   /* ---------- full-page planner editor ---------- */
   renderEditor() {
     const week = this.getWeekDays();
-    const workouts = (this.storage.getUserWorkouts() || []).filter(w => !w || !w.isActivity);
+    const workouts = (this.storage.getUserWorkouts() || []).filter(w => {
+      if (!w) return false;
+      if (w.isActivity) return false;
+      if (w.id && String(w.id).startsWith('activity:')) return false;
+      return true;
+    });
     const activities = this.storage.getActivities() || ['stretching', 'rest', 'recovery'];
     return `
       <div class="p-4 grid grid-cols-3 gap-4">

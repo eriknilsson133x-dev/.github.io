@@ -12,6 +12,7 @@ import { renderRepsUI } from './repsSetUI.js';
 class App {
   constructor() {
     this.storage = new Storage();
+    try { if (typeof this.storage.dedupeActivityConflicts === 'function') this.storage.dedupeActivityConflicts(); } catch (e) { /* ignore */ }
     this.router = new Router();
     this.timer = null;
     this.calendar = new Calendar(this.storage);
