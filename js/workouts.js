@@ -68,10 +68,26 @@ export function setupFormListeners() {
           if (toolWrap) toolWrap.style.display = checked ? 'none' : '';
         } catch (e) { /* ignore */ }
 
-        // hide type radio wrapper
+        // hide type radio wrapper (find the outer div that contains the label + radio group)
         try {
           const typeEl = form.querySelector('input[name="type"]');
-          const typeWrap = typeEl ? typeEl.closest('div') : null;
+          let typeWrap = null;
+          if (typeEl) {
+            // walk up until we find an ancestor that contains the radio group and a label
+            let ancestor = typeEl.closest('div');
+            while (ancestor && ancestor !== form) {
+              if (ancestor.querySelectorAll && ancestor.querySelectorAll('input[name="type"]').length > 0 && ancestor.querySelector('label')) {
+                typeWrap = ancestor;
+                break;
+              }
+              ancestor = ancestor.parentElement;
+            }
+            // fallback: use two levels up
+            if (!typeWrap) {
+              const first = typeEl.closest('div');
+              typeWrap = first && first.parentElement ? first.parentElement : first;
+            }
+          }
           if (typeWrap) typeWrap.style.display = checked ? 'none' : '';
         } catch (e) { /* ignore */ }
 
