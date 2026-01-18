@@ -235,7 +235,7 @@ export class Calendar {
                     const activity = item.data;
                     return `<div draggable="true" ondragstart="window.app.dragStartActivityForCalendar(event,'${activity}')" ondragend="window.app.dragEndForCalendar(event)"
                       class="${this.completed[date] && this.completed[date].includes(item.id) ? 'bg-green-700' : 'bg-yellow-700'} rounded px-2 py-1 text-sm cursor-move flex items-center justify-between">
-                      <span onclick="window.app.startActivity('${activity}')" style="flex:1;cursor:pointer">${activity.charAt(0).toUpperCase() + activity.slice(1)}${recurringIds.includes(item.id) ? ' 🔁' : ''}</span>
+                      <span onclick="window.app.startActivity('${activity}','${date}')" style="flex:1;cursor:pointer">${activity.charAt(0).toUpperCase() + activity.slice(1)}${recurringIds.includes(item.id) ? ' 🔁' : ''}</span>
                       <button onclick="event.stopPropagation(); window.app.removeFromDayForCalendar('${date}','${item.id}')"
                         class="ml-2 text-xs">✕</button>
                     </div>`;
@@ -463,7 +463,7 @@ export class Calendar {
                     } else if (id.startsWith('activity:')) {
                       const activity = id.split(':')[1];
                       return `<div class="${this.completed[d] && this.completed[d].includes(id) ? 'bg-green-700' : 'bg-yellow-700'} rounded px-2 py-1 text-sm flex items-center justify-between">
-                                <span onclick="window.app.startActivity('${activity}')" style="flex:1;cursor:pointer">${activity.charAt(0).toUpperCase() + activity.slice(1)}${recurringIds.includes(id) ? ' 🔁' : ''}</span>
+                                <span onclick="window.app.startActivity('${activity}','${d}')" style="flex:1;cursor:pointer">${activity.charAt(0).toUpperCase() + activity.slice(1)}${recurringIds.includes(id) ? ' 🔁' : ''}</span>
                                 <div class="flex items-center gap-2">
                                   <button onclick="event.stopPropagation(); window.app.toggleRecurringForCalendar('${d}','${id}')" class="text-xs">${recurringIds.includes(id) ? 'Unrec' : 'Rec'}</button>
                                   <button onclick="event.stopPropagation(); window.app.removeFromDayForCalendar('${d}','${id}')" class="ml-2 text-xs">✕</button>

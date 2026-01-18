@@ -90,7 +90,7 @@ class App {
 
   }
 
-  startActivity(name) {
+  startActivity(name, date) {
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
     modal.innerHTML = `
@@ -116,13 +116,13 @@ class App {
         details: []
       };
       try { if (this.logger && typeof this.logger.addEntry === 'function') this.logger.addEntry(entry); } catch (e) { console.error('Failed to add log entry for activity', e); }
-      // Mark activity as completed in calendar for today
-      const todayDate = new Date().toISOString().split('T')[0];
+      // Mark activity as completed in calendar
+      const completionDate = date || new Date().toISOString().split('T')[0];
       const activityId = `activity:${name}`;
       if (this.calendar) {
-        if (!this.calendar.completed[todayDate]) this.calendar.completed[todayDate] = [];
-        if (!this.calendar.completed[todayDate].includes(activityId)) {
-          this.calendar.completed[todayDate].push(activityId);
+        if (!this.calendar.completed[completionDate]) this.calendar.completed[completionDate] = [];
+        if (!this.calendar.completed[completionDate].includes(activityId)) {
+          this.calendar.completed[completionDate].push(activityId);
           this.storage.set('planCompleted', this.calendar.completed);
         }
       }
