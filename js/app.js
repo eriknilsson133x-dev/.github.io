@@ -116,6 +116,16 @@ class App {
         details: []
       };
       try { if (this.logger && typeof this.logger.addEntry === 'function') this.logger.addEntry(entry); } catch (e) { console.error('Failed to add log entry for activity', e); }
+      // Mark activity as completed in calendar for today
+      const todayDate = new Date().toISOString().split('T')[0];
+      const activityId = `activity:${name}`;
+      if (this.calendar) {
+        if (!this.calendar.completed[todayDate]) this.calendar.completed[todayDate] = [];
+        if (!this.calendar.completed[todayDate].includes(activityId)) {
+          this.calendar.completed[todayDate].push(activityId);
+          this.storage.set('planCompleted', this.calendar.completed);
+        }
+      }
       modal.remove();
       if (typeof this.render === 'function') this.render();
     };
