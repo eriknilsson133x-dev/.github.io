@@ -87,9 +87,6 @@
     ],
     "2026-01-17": [
       "0e4adb9e-37ef-4697-a180-0d93927f7db6"
-    ],
-    "2026-01-19": [
-      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
     ]
   },
   "planNotes": {
@@ -306,18 +303,6 @@
     },
     {
       "date": "2026-01-17",
-      "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
-      "workoutName": "Science fingerboard",
-      "bestValue": 30,
-      "isPR": false,
-      "summary": "2 sets × 30 s  20 mm",
-      "details": [
-        "Set 1: 30 s  20 mm",
-        "Set 2: 30 s  20 mm"
-      ]
-    },
-    {
-      "date": "2026-01-19",
       "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
       "workoutName": "Science fingerboard",
       "bestValue": 30,
