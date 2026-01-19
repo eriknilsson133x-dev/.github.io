@@ -87,6 +87,9 @@
     ],
     "2026-01-17": [
       "0e4adb9e-37ef-4697-a180-0d93927f7db6"
+    ],
+    "2026-01-19": [
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
     ]
   },
   "planNotes": {
@@ -94,7 +97,8 @@
     "2026-01-06": "Session at klätterlabbet, väldigt jävla smutsigt, hittade knappt greppen. Klättrade på världens tredje smutsigaste moonboard enligt Alex handhold",
     "2026-01-08": "Session at backaboulder, did some 6a-6b tricky slabs, finished off all 6b+ BM on 2024",
     "2026-01-11": "Session with fuad, barely did any climbs, or so it felt like at least, but it was fun",
-    "2026-01-15": "Session with Jan hendrik at luchthaven, decent gym, a lot of stairs. \nFlashed a 7a classic on 30deg tension board\nTension board is quite fun"
+    "2026-01-15": "Session with Jan hendrik at luchthaven, decent gym, a lot of stairs. \nFlashed a 7a classic on 30deg tension board\nTension board is quite fun",
+    "2026-01-18": "Session at sterk with fuad\nFlashed a bm 7a on the 2024 \n\nDid 6s 10 mm bw 6 sets"
   },
   "activities": [],
   "log": [
@@ -312,6 +316,27 @@
         "Set 1: 30 s  20 mm",
         "Set 2: 30 s  20 mm"
       ]
+    },
+    {
+      "date": "2026-01-19",
+      "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "workoutName": "Science fingerboard",
+      "bestValue": 30,
+      "isPR": false,
+      "summary": "2 sets × 30 s  20 mm",
+      "details": [
+        "Set 1: 30 s  20 mm",
+        "Set 2: 30 s  20 mm"
+      ]
+    },
+    {
+      "date": "2026-01-18T00:00:00.000Z",
+      "workoutId": null,
+      "workoutName": "",
+      "bestValue": 0,
+      "isPR": false,
+      "summary": "Session at sterk with fuad\nFlashed a bm 7a on the 2024 \n\nDid 6s 10 mm bw 6 sets",
+      "details": []
     }
   ],
   "prs": {
