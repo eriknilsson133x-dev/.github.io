@@ -228,16 +228,14 @@ export class Storage {
       const payload = this.export();
       const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
 
-      // Check if file exists to get sha (skip if force overwrite)
+      // Check if file exists to get sha (always fetch, even for force overwrite)
       let sha = null;
-      if (!force) {
-        const getRes = await fetch(apiBase + `?ref=${encodeURIComponent(branch)}`, {
-          headers: token ? { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' } : { Accept: 'application/vnd.github.v3+json' }
-        });
-        if (getRes.ok) {
-          const j = await getRes.json();
-          if (j && j.sha) sha = j.sha;
-        }
+      const getRes = await fetch(apiBase + `?ref=${encodeURIComponent(branch)}`, {
+        headers: token ? { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' } : { Accept: 'application/vnd.github.v3+json' }
+      });
+      if (getRes.ok) {
+        const j = await getRes.json();
+        if (j && j.sha) sha = j.sha;
       }
 
       const body = { message, content, branch };
