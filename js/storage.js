@@ -224,33 +224,51 @@ export class Storage {
     try {
       const { owner, repo, path = 'data/backup.json', branch = 'main', token, message = 'crimpd backup', force = false } = options || {};
       if (!owner || !repo || !path) throw new Error('owner, repo and path are required');
-      const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
+      const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+      const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/${encodedPath}`;
       const payload = this.export();
       const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
 
-      // Check if file exists to get sha (always fetch, even for force overwrite)
-      let sha = null;
-      const getRes = await fetch(apiBase + `?ref=${encodeURIComponent(branch)}`, {
-        headers: token ? { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' } : { Accept: 'application/vnd.github.v3+json' }
-      });
-      if (getRes.ok) {
-        const j = await getRes.json();
-        if (j && j.sha) sha = j.sha;
-      }
-
-      const body = { message, content, branch };
-      if (sha) body.sha = sha;
-
       const headers = { Accept: 'application/vnd.github.v3+json' };
       if (token) headers.Authorization = `token ${token}`;
-      const putRes = await fetch(apiBase, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(body)
-      });
-      const pj = await putRes.json();
-      if (!putRes.ok) throw new Error(pj && pj.message ? pj.message : 'GitHub save failed');
-      return pj;
+
+      const fetchSha = async () => {
+        let currentSha = null;
+        const res = await fetch(apiBase + `?ref=${encodeURIComponent(branch)}`, { headers });
+        if (res.ok) {
+          const j = await res.json();
+          if (j && j.sha) currentSha = j.sha;
+        }
+        return currentSha;
+      };
+
+      const attemptSave = async (currentSha) => {
+        const body = { message, content, branch };
+        if (currentSha) body.sha = currentSha;
+        const putRes = await fetch(apiBase, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(body)
+        });
+        const pj = await putRes.json();
+        if (!putRes.ok) throw new Error(pj && pj.message ? pj.message : 'GitHub save failed');
+        return pj;
+      };
+
+      // Always fetch SHA first
+      let sha = await fetchSha();
+      try {
+        return await attemptSave(sha);
+      } catch (err) {
+        // If force overwrite is requested and we hit a sha mismatch, refetch sha and retry once
+        const msg = (err && err.message) || '';
+        const needsRetry = force && /sha/i.test(msg);
+        if (needsRetry) {
+          const retrySha = await fetchSha();
+          return await attemptSave(retrySha);
+        }
+        throw err;
+      }
     } catch (err) {
       console.error('saveToGitHub failed', err);
       throw err;
