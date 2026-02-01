@@ -222,50 +222,111 @@ export class Storage {
   // options: { owner, repo, path, branch, token, message }
   async saveToGitHub(options) {
     try {
-      const { owner, repo, path = 'data/backup.json', branch = 'main', token, message = 'crimpd backup', force = false } = options || {};
+      const { owner, repo, path = 'data/backup.json', branch = 'main', token, message = 'crimpd backup', force = false, merge = true } = options || {};
       if (!owner || !repo || !path) throw new Error('owner, repo and path are required');
+
       const encodedPath = path.split('/').map(encodeURIComponent).join('/');
       const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/${encodedPath}`;
-      const payload = this.export();
-      const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+      const payloadLocal = this.export();
+      const contentLocal = btoa(unescape(encodeURIComponent(JSON.stringify(payloadLocal, null, 2))));
 
       const headers = { Accept: 'application/vnd.github.v3+json' };
       if (token) headers.Authorization = `token ${token}`;
 
-      const fetchSha = async () => {
-        let currentSha = null;
-        const res = await fetch(apiBase + `?ref=${encodeURIComponent(branch)}`, { headers });
-        if (res.ok) {
+      // helper: fetch remote file JSON (if exists)
+      const fetchRemote = async () => {
+        try {
+          const res = await fetch(apiBase + `?ref=${encodeURIComponent(branch)}`, { headers });
+          if (!res.ok) return null;
           const j = await res.json();
-          if (j && j.sha) currentSha = j.sha;
-        }
-        return currentSha;
+          if (!j || !j.content) return null;
+          const raw = j.content.replace(/\n/g, '');
+          const decoded = decodeURIComponent(escape(atob(raw)));
+          const parsed = JSON.parse(decoded);
+          return { parsed, sha: j.sha };
+        } catch (e) { return null; }
       };
 
-      const attemptSave = async (currentSha) => {
-        const body = { message, content, branch };
-        if (currentSha) body.sha = currentSha;
-        const putRes = await fetch(apiBase, {
-          method: 'PUT',
-          headers,
-          body: JSON.stringify(body)
-        });
-        const pj = await putRes.json();
-        if (!putRes.ok) throw new Error(pj && pj.message ? pj.message : 'GitHub save failed');
+      // helper: write a file to GitHub at given path (relative repo path)
+      const putFile = async (repoPath, contentB64, commitMessage, branchName, shaOpt) => {
+        const encoded = repoPath.split('/').map(encodeURIComponent).join('/');
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encoded}`;
+        const body = { message: commitMessage, content: contentB64, branch: branchName };
+        if (shaOpt) body.sha = shaOpt;
+        const r = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(body) });
+        const pj = await r.json();
+        if (!r.ok) throw new Error(pj && pj.message ? pj.message : 'GitHub put failed');
         return pj;
       };
 
-      // Always fetch SHA first
-      let sha = await fetchSha();
+      // Merge remote and local payloads
+      const mergePayloads = (remote, local) => {
+        if (!remote) return local;
+        const out = {};
+        // merge objects: plan, planRecurring, planCompleted, planNotes, prs
+        out.plan = Object.assign({}, remote.plan || {}, local.plan || {});
+        out.planRecurring = Object.assign({}, remote.planRecurring || {}, local.planRecurring || {});
+        out.planCompleted = Object.assign({}, remote.planCompleted || {}, local.planCompleted || {});
+        out.planNotes = Object.assign({}, remote.planNotes || {}, local.planNotes || {});
+        out.prs = Object.assign({}, remote.prs || {}, local.prs || {});
+        out.progressCategories = local.progressCategories || remote.progressCategories || [];
+
+        // activities: union of names
+        const aRem = Array.isArray(remote.activities) ? remote.activities : [];
+        const aLoc = Array.isArray(local.activities) ? local.activities : [];
+        out.activities = Array.from(new Set(aRem.concat(aLoc)));
+
+        // userWorkouts: merge by id, prefer local
+        const uwRem = Array.isArray(remote.userWorkouts) ? remote.userWorkouts : [];
+        const uwLoc = Array.isArray(local.userWorkouts) ? local.userWorkouts : [];
+        const uwMap = new Map();
+        uwRem.forEach(u => { if (u && u.id) uwMap.set(u.id, u); });
+        uwLoc.forEach(u => { if (u && u.id) uwMap.set(u.id, u); });
+        out.userWorkouts = Array.from(uwMap.values());
+
+        // log: merge and dedupe by id or date+summary
+        const logRem = Array.isArray(remote.log) ? remote.log : [];
+        const logLoc = Array.isArray(local.log) ? local.log : [];
+        const logMap = new Map();
+        const keyFor = (e) => (e && e.id) ? `id:${e.id}` : `ds:${(e && e.date)||''}|${(e && e.summary)||JSON.stringify(e)}`;
+        logRem.forEach(e => { try { logMap.set(keyFor(e), e); } catch (e) {} });
+        logLoc.forEach(e => { try { logMap.set(keyFor(e), e); } catch (e) {} });
+        out.log = Array.from(logMap.values()).sort((a,b) => (a.date||'') < (b.date||'') ? 1 : -1);
+
+        return out;
+      };
+
+      // perform merge if requested
+      const remote = await fetchRemote();
+      const mergedPayload = (merge) ? mergePayloads(remote && remote.parsed, payloadLocal) : payloadLocal;
+
+      // create a timestamped backup copy under backups/
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupPath = `backups/backup-${timestamp}.json`;
+      const backupContent = btoa(unescape(encodeURIComponent(JSON.stringify(remote && remote.parsed ? remote.parsed : payloadLocal, null, 2))));
       try {
-        return await attemptSave(sha);
+        // attempt to write backup (no sha required if new)
+        await putFile(backupPath, backupContent, `Backup before merge ${timestamp}`, branch);
+      } catch (e) {
+        // ignore backup failures but log
+        console.warn('saveToGitHub: backup write failed', e && e.message);
+      }
+
+      // finally, write merged payload to target path using latest sha
+      const mergedContent = btoa(unescape(encodeURIComponent(JSON.stringify(mergedPayload, null, 2))));
+      // fetch latest sha again to be safe
+      const latest = await fetchRemote();
+      const latestSha = latest && latest.sha ? latest.sha : null;
+      try {
+        const res = await putFile(path, mergedContent, message || `Backup: merged ${timestamp}`, branch, latestSha);
+        return res;
       } catch (err) {
-        // If force overwrite is requested and we hit a sha mismatch, refetch sha and retry once
+        // on SHA error and force=true, retry by refetching sha once
         const msg = (err && err.message) || '';
-        const needsRetry = force && /sha/i.test(msg);
-        if (needsRetry) {
-          const retrySha = await fetchSha();
-          return await attemptSave(retrySha);
+        if (force && /sha/i.test(msg)) {
+          const retry = await fetchRemote();
+          const retrySha = retry && retry.sha ? retry.sha : null;
+          return await putFile(path, mergedContent, message || `Backup: merged ${timestamp}`, branch, retrySha);
         }
         throw err;
       }
