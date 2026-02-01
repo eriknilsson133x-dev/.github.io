@@ -426,6 +426,10 @@ class App {
           <input id="gh-message" class="p-2 bg-gray-600 rounded text-gray-100" placeholder="Commit message" value="${savedMessage}">
           <label class="flex items-center gap-2 text-sm"><input id="gh-autoload" type="checkbox" ${savedAutoLoad ? 'checked' : ''}> Auto-load backup on startup</label>
           <label class="flex items-center gap-2 text-sm"><input id="gh-force" type="checkbox"> Force overwrite (bypass SHA check)</label>
+          <div class="text-xs text-gray-400 mt-2">Remote SHA: <span id="gh-remote-sha" class="font-mono text-sm">(unknown)</span> <button id="gh-refresh-sha" class="ml-2 px-2 py-1 bg-gray-600 rounded text-xs">Refresh</button></div>
+          <div class="mt-2">
+            <button id="gh-forcepush" class="px-3 py-2 bg-red-600 text-white rounded text-sm">Force Push Now</button>
+          </div>
           <div class="flex gap-2">
             <button id="gh-save" class="px-4 py-2 bg-green-600 text-white rounded">Save to GitHub</button>
             <button id="gh-load" class="px-4 py-2 bg-yellow-600 text-white rounded">Load from GitHub</button>
@@ -465,6 +469,53 @@ class App {
           await this.storage.saveToGitHub({ owner, repo, path, branch, token, message, force });
           alert('Saved to GitHub');
         } catch (err) { console.error(err); alert('Save to GitHub failed: ' + (err && err.message)); }
+      });
+
+      // Refresh remote SHA display
+      const ghRefreshBtn = ghForm.querySelector('#gh-refresh-sha');
+      const ghRemoteShaEl = ghForm.querySelector('#gh-remote-sha');
+      const refreshSha = async () => {
+        try {
+          const repoVal = ghForm.querySelector('#gh-repo').value.trim();
+          const pathVal = ghForm.querySelector('#gh-path').value.trim();
+          const branchVal = ghForm.querySelector('#gh-branch').value.trim() || 'main';
+          const tokenVal = ghForm.querySelector('#gh-token').value.trim();
+          if (!repoVal || !pathVal) return;
+          const parts = repoVal.split('/');
+          const owner = parts[0];
+          const repo = parts.slice(1).join('/');
+          const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(pathVal)}?ref=${encodeURIComponent(branchVal)}`;
+          const res = await fetch(apiBase, { headers: tokenVal ? { Authorization: `token ${tokenVal}`, Accept: 'application/vnd.github.v3+json' } : { Accept: 'application/vnd.github.v3+json' } });
+          if (!res.ok) { ghRemoteShaEl.textContent = '(not found)'; return; }
+          const j = await res.json(); ghRemoteShaEl.textContent = (j && j.sha) ? j.sha : '(no sha)';
+        } catch (e) { ghRemoteShaEl.textContent = '(error)'; }
+      };
+      ghRefreshBtn.addEventListener('click', refreshSha);
+      // initial refresh
+      setTimeout(() => refreshSha(), 100);
+
+      // Force push now: attempts a save with force=true and shows full error message
+      const ghForcePushBtn = ghForm.querySelector('#gh-forcepush');
+      ghForcePushBtn.addEventListener('click', async () => {
+        try {
+          const repoVal = ghForm.querySelector('#gh-repo').value.trim();
+          const path = ghForm.querySelector('#gh-path').value.trim();
+          const branch = ghForm.querySelector('#gh-branch').value.trim() || 'main';
+          const token = ghForm.querySelector('#gh-token').value.trim();
+          const message = ghForm.querySelector('#gh-message').value.trim() || 'crimpd backup from web';
+          if (!repoVal || !path) return alert('Please provide repo and path');
+          const parts = repoVal.split('/'); if (parts.length < 2) return alert('Repo must be in owner/repo format');
+          const owner = parts[0]; const repo = parts.slice(1).join('/');
+          const res = await this.storage.saveToGitHub({ owner, repo, path, branch, token, message, force: true, merge: true });
+          alert('Force push succeeded');
+          // update displayed sha
+          setTimeout(() => refreshSha(), 200);
+        } catch (err) {
+          console.error('Force push failed', err);
+          alert('Force push failed: ' + (err && err.message));
+          // refresh sha to show current state
+          setTimeout(() => refreshSha(), 200);
+        }
       });
 
       ghLoad.addEventListener('click', async () => {
