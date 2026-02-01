@@ -317,19 +317,23 @@ export class Storage {
       // fetch latest sha again to be safe
       const latest = await fetchRemote();
       const latestSha = latest && latest.sha ? latest.sha : null;
-      try {
-        const res = await putFile(path, mergedContent, message || `Backup: merged ${timestamp}`, branch, latestSha);
-        return res;
-      } catch (err) {
-        // on SHA error and force=true, retry by refetching sha once
-        const msg = (err && err.message) || '';
-        if (force && /sha/i.test(msg)) {
-          const retry = await fetchRemote();
-          const retrySha = retry && retry.sha ? retry.sha : null;
-          return await putFile(path, mergedContent, message || `Backup: merged ${timestamp}`, branch, retrySha);
+      // Try writing the merged payload, retrying up to 3 times by refetching latest sha each attempt
+      const maxAttempts = 3;
+      let lastErr = null;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const latestTry = await fetchRemote();
+        const trySha = latestTry && latestTry.sha ? latestTry.sha : null;
+        try {
+          const res = await putFile(path, mergedContent, message || `Backup: merged ${timestamp}`, branch, trySha);
+          return res;
+        } catch (err) {
+          lastErr = err;
+          // if not last attempt, wait a short moment and retry
+          if (attempt < maxAttempts) await new Promise(r => setTimeout(r, 200 * attempt));
         }
-        throw err;
       }
+      // all attempts failed
+      throw lastErr || new Error('GitHub save failed after retries');
     } catch (err) {
       console.error('saveToGitHub failed', err);
       throw err;
