@@ -798,9 +798,10 @@ class App {
       const pw = document.getElementById('presetWeight');
       // prefer user-entered value, fall back to saved workout weight if empty
       if (pw && String(pw.value).trim() !== '') {
-        ts.presetWeight = parseFloat(pw.value) || (w.weight || 0);
+        const v = parseFloat(pw.value);
+        ts.presetWeight = Number.isFinite(v) ? v : ((typeof w.weight !== 'undefined' && w.weight !== null) ? w.weight : 0);
       } else {
-        ts.presetWeight = w.weight || 0;
+        ts.presetWeight = (typeof w.weight !== 'undefined' && w.weight !== null) ? w.weight : 0;
       }
       // if weight was changed, save it back to the workout template
       if (ts.presetWeight !== (w.weight || 0)) {
@@ -816,7 +817,8 @@ class App {
     if (isFinger) {
       const pd = document.getElementById('presetDepth');
       if (pd && String(pd.value).trim() !== '') {
-        ts.presetDepth = parseInt(pd.value, 10) || (w.depth || 0);
+        const d = parseInt(pd.value, 10);
+        ts.presetDepth = Number.isFinite(d) ? d : ((typeof w.depth !== 'undefined' && w.depth !== null) ? w.depth : null);
       } else {
         ts.presetDepth = (typeof w.depth !== 'undefined' && w.depth !== null) ? w.depth : null;
       }
