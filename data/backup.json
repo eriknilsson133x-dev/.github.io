@@ -139,6 +139,16 @@
       "0e4adb9e-37ef-4697-a180-0d93927f7db6"
     ],
     "2026-02-10": [
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "activity:board climbing"
+    ],
+    "2026-02-11": [
+      "0e4adb9e-37ef-4697-a180-0d93927f7db6"
+    ],
+    "2026-02-12": [
+      "activity:climbing"
+    ],
+    "2026-02-13": [
       "0e4adb9e-37ef-4697-a180-0d93927f7db6"
     ]
   },
@@ -153,7 +163,9 @@
     "2026-01-29": "Session at sterk with fede and fuad. Tried two blacks, very hard. Tried some moves on 7a+ and 7b on moonboard. A bit of potential on the 7b",
     "2026-02-03": "Seassion with Jan hendrik at luchthaven, did a 6c+/7a",
     "2026-02-06": "Manno:\nFrenchies:\n1 set max intensitet, fully over, 90, 135, 3-5 s lockoffs, add weights accordingly\n\nTypewriter: långsamt över stången, aim for pre 8.\n\nRest ~3 min between sets\n\nDuring rest, Mobility or pickup fingerboard \n\nStart doing dips for mantling moves, probably resistance bands\n\nNo hand slabs and finding the no hand points",
-    "2026-02-08": "Session at sterk, one 7a on the 2024, two sets of typewriter, t and I on TRX (5 reps not too hard)"
+    "2026-02-08": "Session at sterk, one 7a on the 2024, two sets of typewriter, t and I on TRX (5 reps not too hard)",
+    "2026-02-10": "Session with Jan Hendrik at luchthaven, mostly cosy session, did 3 7a's",
+    "2026-02-12": "Session at sterk, did a 7a+ and 7a benchmark on 2019 moonboard"
   },
   "prs": {
     "809403ab-6e27-4658-ae39-bf8c7985c277": 36,
@@ -276,6 +288,66 @@
   ],
   "log": [
     {
+      "date": "2026-02-13",
+      "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "workoutName": "Science fingerboard",
+      "bestValue": 30,
+      "isPR": false,
+      "summary": "2 sets × 30 s  20 mm",
+      "details": [
+        "Set 1: 30 s  20 mm",
+        "Set 2: 30 s  20 mm"
+      ]
+    },
+    {
+      "date": "2026-02-12T22:32:07.936Z",
+      "workoutId": null,
+      "workoutName": "Climbing",
+      "bestValue": 0,
+      "isPR": false,
+      "summary": "Climbing",
+      "details": []
+    },
+    {
+      "date": "2026-02-12T00:00:00.000Z",
+      "workoutId": null,
+      "workoutName": "",
+      "bestValue": 0,
+      "isPR": false,
+      "summary": "Session at sterk, did a 7a+ and 7a benchmark on 2019 moonboard",
+      "details": []
+    },
+    {
+      "date": "2026-02-11",
+      "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
+      "workoutName": "Science fingerboard",
+      "bestValue": 30,
+      "isPR": false,
+      "summary": "2 sets × 30 s  20 mm",
+      "details": [
+        "Set 1: 30 s  20 mm",
+        "Set 2: 30 s  20 mm"
+      ]
+    },
+    {
+      "date": "2026-02-10T20:27:44.825Z",
+      "workoutId": null,
+      "workoutName": "Board climbing",
+      "bestValue": 0,
+      "isPR": false,
+      "summary": "Board climbing — Tension board ",
+      "details": []
+    },
+    {
+      "date": "2026-02-10T00:00:00.000Z",
+      "workoutId": null,
+      "workoutName": "",
+      "bestValue": 0,
+      "isPR": false,
+      "summary": "Session with Jan Hendrik at luchthaven, mostly cosy session, did 3 7a's",
+      "details": []
+    },
+    {
       "date": "2026-02-10",
       "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
       "workoutName": "Science fingerboard",
@@ -330,7 +402,7 @@
       "workoutName": "",
       "bestValue": 0,
       "isPR": false,
-      "summary": "Manno:\nFrenchies:\n1 set max intensitet, fully over, 90, 135, 3-5 s lockoffs, add weights accordingly\n\nTypewriter: långsamt över stången, aim for pre 8.\n\nRest ~3 min between sets\n\nDuring rest, Mobility or pickup fingerboard \n\nStart doing dips for mantling moves, probably resistance bands\n\nNo hand slabs and finding the no hand points",
+      "summary": "Manno:\nFrenchies:\n1 set max intensitet, full över, 90, 135, 3-5 s låsning\n\nTypewriter: långsamt över stången \n\nMobilitet",
       "details": []
     },
     {
@@ -339,7 +411,7 @@
       "workoutName": "",
       "bestValue": 0,
       "isPR": false,
-      "summary": "Manno:\nFrenchies:\n1 set max intensitet, full över, 90, 135, 3-5 s låsning\n\nTypewriter: långsamt över stången \n\nMobilitet",
+      "summary": "Manno:\nFrenchies:\n1 set max intensitet, fully over, 90, 135, 3-5 s lockoffs, add weights accordingly\n\nTypewriter: långsamt över stången, aim for pre 8.\n\nRest ~3 min between sets\n\nDuring rest, Mobility or pickup fingerboard \n\nStart doing dips for mantling moves, probably resistance bands\n\nNo hand slabs and finding the no hand points",
       "details": []
     },
     {
@@ -407,6 +479,17 @@
     },
     {
       "date": "2026-02-01",
+      "workoutId": "48fb9735-f5cb-42c7-a760-9252acffd091",
+      "workoutName": "Maxhangs",
+      "bestValue": 25,
+      "isPR": false,
+      "summary": "6 sets: 10 mm",
+      "details": [
+        "6 sets: 7 s  10 mm be, last set 10 s"
+      ]
+    },
+    {
+      "date": "2026-02-01",
       "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
       "workoutName": "Science fingerboard",
       "bestValue": 30,
@@ -415,17 +498,6 @@
       "details": [
         "Set 1: 30 s  20 mm",
         "Set 2: 30 s  20 mm"
-      ]
-    },
-    {
-      "date": "2026-02-01",
-      "workoutId": "48fb9735-f5cb-42c7-a760-9252acffd091",
-      "workoutName": "Maxhangs",
-      "bestValue": 25,
-      "isPR": false,
-      "summary": "6 sets: 10 mm",
-      "details": [
-        "6 sets: 7 s  10 mm be, last set 10 s"
       ]
     },
     {
@@ -496,6 +568,15 @@
     },
     {
       "date": "2026-01-24",
+      "workoutId": null,
+      "workoutName": "Board climbing",
+      "bestValue": 0,
+      "isPR": false,
+      "summary": "Board climbing —Tension board 2 30° Flash 7b 7a+7a+ classic Did 2 7a's",
+      "details": []
+    },
+    {
+      "date": "2026-01-24",
       "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
       "workoutName": "Science fingerboard",
       "bestValue": 30,
@@ -505,15 +586,6 @@
         "Set 1: 30 s  20 mm",
         "Set 2: 30 s  20 mm"
       ]
-    },
-    {
-      "date": "2026-01-24",
-      "workoutId": null,
-      "workoutName": "Board climbing",
-      "bestValue": 0,
-      "isPR": false,
-      "summary": "Board climbing —Tension board 2 30° Flash 7b 7a+7a+ classic Did 2 7a's",
-      "details": []
     },
     {
       "date": "2026-01-23",
@@ -608,19 +680,19 @@
     {
       "date": "2026-01-15T00:00:00.000Z",
       "workoutId": null,
-      "workoutName": "Climbing",
+      "workoutName": "",
       "bestValue": 0,
       "isPR": false,
-      "summary": "Climbing",
+      "summary": "Session with Jan hendrik at luchthaven, decent gym, a lot of stairs. \nFlashed a 7a classic on 30deg tension board\nTension board is quite fun",
       "details": []
     },
     {
       "date": "2026-01-15T00:00:00.000Z",
       "workoutId": null,
-      "workoutName": "",
+      "workoutName": "Climbing",
       "bestValue": 0,
       "isPR": false,
-      "summary": "Session with Jan hendrik at luchthaven, decent gym, a lot of stairs. \nFlashed a 7a classic on 30deg tension board\nTension board is quite fun",
+      "summary": "Climbing",
       "details": []
     },
     {
@@ -671,19 +743,19 @@
     {
       "date": "2026-01-11T00:00:00.000Z",
       "workoutId": null,
-      "workoutName": "Climbing",
+      "workoutName": "",
       "bestValue": 0,
       "isPR": false,
-      "summary": "Climbing",
+      "summary": "Session with fuad, barely did any climbs, or so it felt like at least, but it was fun",
       "details": []
     },
     {
       "date": "2026-01-11T00:00:00.000Z",
       "workoutId": null,
-      "workoutName": "",
+      "workoutName": "Climbing",
       "bestValue": 0,
       "isPR": false,
-      "summary": "Session with fuad, barely did any climbs, or so it felt like at least, but it was fun",
+      "summary": "Climbing",
       "details": []
     },
     {
