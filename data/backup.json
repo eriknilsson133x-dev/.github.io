@@ -165,7 +165,8 @@
     "2026-02-06": "Manno:\nFrenchies:\n1 set max intensitet, fully over, 90, 135, 3-5 s lockoffs, add weights accordingly\n\nTypewriter: långsamt över stången, aim for pre 8.\n\nRest ~3 min between sets\n\nDuring rest, Mobility or pickup fingerboard \n\nStart doing dips for mantling moves, probably resistance bands\n\nNo hand slabs and finding the no hand points",
     "2026-02-08": "Session at sterk, one 7a on the 2024, two sets of typewriter, t and I on TRX (5 reps not too hard)",
     "2026-02-10": "Session with Jan Hendrik at luchthaven, mostly cosy session, did 3 7a's",
-    "2026-02-12": "Session at sterk, did a 7a+ and 7a benchmark on 2019 moonboard"
+    "2026-02-12": "Session at sterk, did a 7a+ and 7a benchmark on 2019 moonboard",
+    "2026-02-15": "Session at sterk, tried some 6C on the moonboard, felt hard.\nDid three sets of frenchies, should add weight next time, did one set of typewriter using wide grip (between two beastmakers). Felt quite strong, good."
   },
   "prs": {
     "809403ab-6e27-4658-ae39-bf8c7985c277": 36,
@@ -193,20 +194,22 @@
   "userWorkouts": [
     {
       "id": "8777061b-63ed-4f98-93ca-69014551b5f8",
+      "isActivity": false,
       "name": "Science fingerblock hang",
-      "reps": null,
-      "rest": 10,
-      "sets": 2,
       "tool": "Finger block",
+      "sets": 2,
       "type": "duration",
-      "weight": null,
-      "duration": 2,
-      "hasWeight": false,
-      "weightUnit": null,
-      "repeaterRest": null,
+      "duration": 30,
+      "reps": null,
       "repeaterWork": null,
+      "repeaterRest": null,
+      "repeaterCount": null,
+      "hasWeight": false,
+      "weight": null,
+      "weightUnit": null,
+      "rest": 120,
       "leftRightMode": true,
-      "repeaterCount": null
+      "depth": 20
     },
     {
       "id": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
@@ -287,6 +290,53 @@
     }
   ],
   "log": [
+    {
+      "date": "2026-02-17T10:43:54.985Z",
+      "workoutId": "8777061b-63ed-4f98-93ca-69014551b5f8",
+      "workoutName": "Science fingerblock hang",
+      "bestValue": 30,
+      "isPR": false,
+      "summary": "2 sets × 30 s  20 mm",
+      "details": [
+        "Set 1: 30 s  20 mm"
+      ]
+    },
+    {
+      "date": "2026-02-16T22:11:30.312Z",
+      "workoutId": "8777061b-63ed-4f98-93ca-69014551b5f8",
+      "workoutName": "Science fingerblock hang",
+      "bestValue": 30,
+      "isPR": false,
+      "summary": "2 sets × 30 s  20 mm",
+      "details": [
+        "Set 1: 30 s  20 mm"
+      ]
+    },
+    {
+      "date": "2026-02-15T17:16:57.300Z",
+      "workoutId": "48fb9735-f5cb-42c7-a760-9252acffd091",
+      "workoutName": "Maxhangs",
+      "bestValue": 0,
+      "isPR": false,
+      "summary": "6 sets: 10 s  10 mm  0 kg — 10 s 8 mm,\n6 s 8 mm \nRest 10 mm 10 s",
+      "details": [
+        "Set 1: 10 s  10 mm  0 kg",
+        "Set 2: 10 s  10 mm  0 kg",
+        "Set 3: 10 s  10 mm  0 kg",
+        "Set 4: 10 s  10 mm  0 kg",
+        "Set 5: 10 s  10 mm  0 kg",
+        "Set 6: 10 s  10 mm  0 kg"
+      ]
+    },
+    {
+      "date": "2026-02-15T00:00:00.000Z",
+      "workoutId": null,
+      "workoutName": "",
+      "bestValue": 0,
+      "isPR": false,
+      "summary": "Session at sterk, tried some 6C on the moonboard, felt hard.\nDid three sets of frenchies, should add weight next time, did one set of typewriter using wide grip (between two beastmakers). Felt quite strong, good.",
+      "details": []
+    },
     {
       "date": "2026-02-13",
       "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
@@ -402,7 +452,7 @@
       "workoutName": "",
       "bestValue": 0,
       "isPR": false,
-      "summary": "Manno:\nFrenchies:\n1 set max intensitet, full över, 90, 135, 3-5 s låsning\n\nTypewriter: långsamt över stången \n\nMobilitet",
+      "summary": "Manno:\nFrenchies:\n1 set max intensitet, fully over, 90, 135, 3-5 s lockoffs, add weights accordingly\n\nTypewriter: långsamt över stången, aim for pre 8.\n\nRest ~3 min between sets\n\nDuring rest, Mobility or pickup fingerboard \n\nStart doing dips for mantling moves, probably resistance bands\n\nNo hand slabs and finding the no hand points",
       "details": []
     },
     {
@@ -411,7 +461,7 @@
       "workoutName": "",
       "bestValue": 0,
       "isPR": false,
-      "summary": "Manno:\nFrenchies:\n1 set max intensitet, fully over, 90, 135, 3-5 s lockoffs, add weights accordingly\n\nTypewriter: långsamt över stången, aim for pre 8.\n\nRest ~3 min between sets\n\nDuring rest, Mobility or pickup fingerboard \n\nStart doing dips for mantling moves, probably resistance bands\n\nNo hand slabs and finding the no hand points",
+      "summary": "Manno:\nFrenchies:\n1 set max intensitet, full över, 90, 135, 3-5 s låsning\n\nTypewriter: långsamt över stången \n\nMobilitet",
       "details": []
     },
     {
@@ -479,17 +529,6 @@
     },
     {
       "date": "2026-02-01",
-      "workoutId": "48fb9735-f5cb-42c7-a760-9252acffd091",
-      "workoutName": "Maxhangs",
-      "bestValue": 25,
-      "isPR": false,
-      "summary": "6 sets: 10 mm",
-      "details": [
-        "6 sets: 7 s  10 mm be, last set 10 s"
-      ]
-    },
-    {
-      "date": "2026-02-01",
       "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
       "workoutName": "Science fingerboard",
       "bestValue": 30,
@@ -498,6 +537,17 @@
       "details": [
         "Set 1: 30 s  20 mm",
         "Set 2: 30 s  20 mm"
+      ]
+    },
+    {
+      "date": "2026-02-01",
+      "workoutId": "48fb9735-f5cb-42c7-a760-9252acffd091",
+      "workoutName": "Maxhangs",
+      "bestValue": 25,
+      "isPR": false,
+      "summary": "6 sets: 10 mm",
+      "details": [
+        "6 sets: 7 s  10 mm be, last set 10 s"
       ]
     },
     {
@@ -568,15 +618,6 @@
     },
     {
       "date": "2026-01-24",
-      "workoutId": null,
-      "workoutName": "Board climbing",
-      "bestValue": 0,
-      "isPR": false,
-      "summary": "Board climbing —Tension board 2 30° Flash 7b 7a+7a+ classic Did 2 7a's",
-      "details": []
-    },
-    {
-      "date": "2026-01-24",
       "workoutId": "0e4adb9e-37ef-4697-a180-0d93927f7db6",
       "workoutName": "Science fingerboard",
       "bestValue": 30,
@@ -586,6 +627,15 @@
         "Set 1: 30 s  20 mm",
         "Set 2: 30 s  20 mm"
       ]
+    },
+    {
+      "date": "2026-01-24",
+      "workoutId": null,
+      "workoutName": "Board climbing",
+      "bestValue": 0,
+      "isPR": false,
+      "summary": "Board climbing —Tension board 2 30° Flash 7b 7a+7a+ classic Did 2 7a's",
+      "details": []
     },
     {
       "date": "2026-01-23",
@@ -680,19 +730,19 @@
     {
       "date": "2026-01-15T00:00:00.000Z",
       "workoutId": null,
-      "workoutName": "",
+      "workoutName": "Climbing",
       "bestValue": 0,
       "isPR": false,
-      "summary": "Session with Jan hendrik at luchthaven, decent gym, a lot of stairs. \nFlashed a 7a classic on 30deg tension board\nTension board is quite fun",
+      "summary": "Climbing",
       "details": []
     },
     {
       "date": "2026-01-15T00:00:00.000Z",
       "workoutId": null,
-      "workoutName": "Climbing",
+      "workoutName": "",
       "bestValue": 0,
       "isPR": false,
-      "summary": "Climbing",
+      "summary": "Session with Jan hendrik at luchthaven, decent gym, a lot of stairs. \nFlashed a 7a classic on 30deg tension board\nTension board is quite fun",
       "details": []
     },
     {
@@ -743,19 +793,19 @@
     {
       "date": "2026-01-11T00:00:00.000Z",
       "workoutId": null,
-      "workoutName": "",
+      "workoutName": "Climbing",
       "bestValue": 0,
       "isPR": false,
-      "summary": "Session with fuad, barely did any climbs, or so it felt like at least, but it was fun",
+      "summary": "Climbing",
       "details": []
     },
     {
       "date": "2026-01-11T00:00:00.000Z",
       "workoutId": null,
-      "workoutName": "Climbing",
+      "workoutName": "",
       "bestValue": 0,
       "isPR": false,
-      "summary": "Climbing",
+      "summary": "Session with fuad, barely did any climbs, or so it felt like at least, but it was fun",
       "details": []
     },
     {
